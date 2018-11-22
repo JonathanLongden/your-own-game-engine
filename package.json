@@ -1,0 +1,38 @@
+{
+  "name": "your-own-game-engine",
+  "version": "0.0.1",
+  "description": "Your own game engine!",
+  "author": "Ateiri <dev@ateiri.com>",
+  "engines": {
+    "node": ">=9.7.1"
+  },
+  "scripts": {
+    "build": "./node_modules/.bin/babel src/engine/index.js -d .dist/engine --env-name production",
+    "serve": "./node_modules/.bin/webpack-dev-server",
+    "lint": "./node_modules/.bin/eslint --fix --ext .js src/*"
+  },
+  "pre-commit": [
+    "lint"
+  ],
+  "devDependencies": {
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/plugin-transform-runtime": "^7.1.0",
+    "@babel/preset-env": "^7.1.6",
+    "babel-eslint": "8",
+    "babel-loader": "^8.0.4",
+    "babel-preset-minify": "^0.5.0",
+    "eslint": "4.x",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-sort-class-members": "^1.4.0",
+    "html-webpack-plugin": "^3.2.0",
+    "pre-commit": "^1.2.2",
+    "webpack": "^4.26.0",
+    "webpack-cli": "^3.1.2",
+    "webpack-dev-server": "^3.1.10"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.1.5"
+  }
+}
