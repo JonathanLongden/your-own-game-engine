@@ -34,6 +34,7 @@
     "webpack-dev-server": "^3.1.10"
   },
   "dependencies": {
-    "@babel/runtime": "^7.1.5"
+    "@babel/runtime": "^7.1.5",
+    "fbemitter": "^2.1.1"
   }
 }
