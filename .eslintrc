@@ -31,5 +31,9 @@
     "object-curly-newline": "off",
     "arrow-parens": "off",
     "no-underscore-dangle": "off"
+  },
+  "env": {
+    "browser": true,
+    "es6": true
   }
 }
