@@ -20,7 +20,9 @@ module.exports = {
   devServer: {
     contentBase: dist,
     compress: true,
-    port: 8081
+    port: 8081,
+    host: '0.0.0.0',
+    disableHostCheck: true
   },
   output: {
     path: dist,
