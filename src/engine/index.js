@@ -1,8 +1,12 @@
-import { WebGLRenderer, rendererEvents } from './renderer';
+import { WebGLRenderer, rendererEvent } from './renderer';
+import { Engine } from './engine';
+import { Keyboard } from './io';
 
-export { WebGLRenderer, rendererEvents };
+export { Engine, WebGLRenderer, rendererEvent, Keyboard };
 
 export default {
+  Engine,
   WebGLRenderer,
-  rendererEvents
+  rendererEvent,
+  Keyboard
 };
