@@ -30,7 +30,8 @@
     "function-paren-newline": "off",
     "object-curly-newline": "off",
     "arrow-parens": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "class-methods-use-this": "off"
   },
   "env": {
     "browser": true,

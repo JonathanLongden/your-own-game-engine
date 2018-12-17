@@ -2,7 +2,7 @@
  * Your game engine show cases will be here.
  */
 
-import { WebGLRenderer, rendererEvents } from '../engine';
+import { Engine, WebGLRenderer, Keyboard, rendererEvent } from '../engine';
 
 // eslint-disable-next-line
 console.log('Your examples script is working well');
@@ -22,9 +22,23 @@ const renderer = new WebGLRenderer({
   fpsThreshold: 1000 / fpsThreshold // ms
 });
 
-renderer.on(rendererEvents.WEBGL_IS_NOT_SUPPORTED, err => {
+const keyboard = new Keyboard();
+
+renderer.on(rendererEvent.UPDATE, () => {
+  if (keyboard.pressed(87)) {
+    // eslint-disable-next-line no-console
+    console.log('Key "W" triggered');
+  }
+});
+
+renderer.on(rendererEvent.WEBGL_IS_NOT_SUPPORTED, err => {
   // eslint-disable-next-line no-console
   console.error(err.message);
 });
 
-renderer.start();
+const engine = new Engine({
+  renderer,
+  keyboard
+});
+
+engine.start();

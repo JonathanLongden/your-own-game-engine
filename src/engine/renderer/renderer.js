@@ -1,10 +1,8 @@
-/* eslint-disable class-methods-use-this */
-
 import { EventEmitter } from 'fbemitter';
 
 import { createCanvas, setupCanvas } from './canvas';
 import { checkWebGLSupport, createRenderingContext } from './webgl';
-import { rendererEvents } from './events';
+import { rendererEvent } from './renderer_event';
 import { createError } from './error';
 import { RenderTimer } from './render_timer';
 
@@ -32,7 +30,7 @@ export class WebGLRenderer {
 
     if (!checkWebGLSupport(gl)) {
       this.#eventEmitter.emit(
-        rendererEvents.WEBGL_IS_NOT_SUPPORTED,
+        rendererEvent.WEBGL_IS_NOT_SUPPORTED,
         createError('WebGL is not supported')
       );
       return;
@@ -63,15 +61,12 @@ export class WebGLRenderer {
     this.#timer.checkpoint();
 
     if (this.#timer.isReachedThreshold()) {
-      // Render frame
       this.#timer.reduce();
 
-      // const fps = Math.round(1000 / this.#timer.delta);
+      this.#eventEmitter.emit(rendererEvent.UPDATE, this.#timer.delta);
 
       this._renderFrame(gl);
     }
-
-    // Lose frame.
 
     window.requestAnimationFrame(this._render.bind(this, ...args));
   }

@@ -1,9 +1,9 @@
 import { WebGLRenderer } from './renderer';
-import { rendererEvents } from './events';
+import { rendererEvent } from './renderer_event';
 
-export { WebGLRenderer, rendererEvents };
+export { WebGLRenderer, rendererEvent };
 
 export default {
   WebGLRenderer,
-  rendererEvents
+  rendererEvent
 };
