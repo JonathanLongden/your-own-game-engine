@@ -1,5 +1,6 @@
 import { Keyboard } from './keyboard';
+import { Mouse } from './mouse';
 
-export { Keyboard };
+export { Keyboard, Mouse };
 
-export default { Keyboard };
+export default { Keyboard, Mouse };
