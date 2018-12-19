@@ -2,7 +2,7 @@
  * Your game engine show cases will be here.
  */
 
-import { Engine, WebGLRenderer, Keyboard, rendererEvent } from '../engine';
+import { Engine, WebGLRenderer, Keyboard, Mouse, rendererEvent } from '../engine';
 
 // eslint-disable-next-line
 console.log('Your examples script is working well');
@@ -23,11 +23,24 @@ const renderer = new WebGLRenderer({
 });
 
 const keyboard = new Keyboard();
+const mouse = new Mouse();
 
 renderer.on(rendererEvent.UPDATE, () => {
   if (keyboard.pressed(87)) {
     // eslint-disable-next-line no-console
     console.log('Key "W" triggered');
+  }
+
+  if (mouse.pressed(0)) {
+    // eslint-disable-next-line no-console
+    console.log('Mouse "0" triggered', {
+      x: mouse.x,
+      y: mouse.y,
+      wheel: mouse.wheel,
+      movementX: mouse.movementX,
+      movementY: mouse.movementY,
+      movementWheel: mouse.movementWheel
+    });
   }
 });
 
@@ -38,7 +51,8 @@ renderer.on(rendererEvent.WEBGL_IS_NOT_SUPPORTED, err => {
 
 const engine = new Engine({
   renderer,
-  keyboard
+  keyboard,
+  mouse
 });
 
 engine.start();
