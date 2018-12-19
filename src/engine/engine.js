@@ -1,10 +1,11 @@
 import { WebGLRenderer, rendererEvent } from './renderer';
-import { Keyboard, Mouse } from './io';
+import { Keyboard, Mouse, Touch } from './io';
 
 const defaultConfiguration = {
   renderer: null,
   keyboard: null,
-  mouse: null
+  mouse: null,
+  touch: null
 };
 
 export class Engine {
@@ -17,7 +18,11 @@ export class Engine {
   constructor(configuration) {
     this.#configuration = Object.assign({}, defaultConfiguration, configuration);
     this.#renderer = this._setupRenderer(configuration.renderer);
-    this.#io = [this._setupKeyboard(configuration.keyboard), this._setupMouse(configuration.mouse)];
+    this.#io = [
+      this._setupKeyboard(configuration.keyboard),
+      this._setupMouse(configuration.mouse),
+      this._setupTouch(configuration.touch)
+    ];
   }
 
   start() {
@@ -36,7 +41,9 @@ export class Engine {
 
   _setupKeyboard(keyboard) {
     if (keyboard && !(keyboard instanceof Keyboard)) {
-      throw new Error('Unknown keyboard, please provide "Keyboard" compatible interface');
+      throw new Error(
+        'Unknown keyboard controller, please provide "Keyboard" compatible interface'
+      );
     }
 
     return keyboard || new Keyboard();
@@ -44,10 +51,18 @@ export class Engine {
 
   _setupMouse(mouse) {
     if (mouse && !(mouse instanceof Mouse)) {
-      throw new Error('Unknown mouse, please provide "Mouse" compatible interface');
+      throw new Error('Unknown mouse controller, please provide "Mouse" compatible interface');
     }
 
     return mouse || new Mouse();
+  }
+
+  _setupTouch(touch) {
+    if (touch && !(touch instanceof Touch)) {
+      throw new Error('Unknown touch controller, please provide "Touch" compatible interface');
+    }
+
+    return touch || new Touch();
   }
 }
 
