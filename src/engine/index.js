@@ -1,13 +1,14 @@
 import { WebGLRenderer, rendererEvent } from './renderer';
 import { Engine } from './engine';
-import { Keyboard, Mouse } from './io';
+import { Keyboard, Mouse, Touch } from './io';
 
-export { Engine, WebGLRenderer, rendererEvent, Keyboard, Mouse };
+export { Engine, WebGLRenderer, rendererEvent, Keyboard, Mouse, Touch };
 
 export default {
   Engine,
   WebGLRenderer,
   rendererEvent,
   Keyboard,
-  Mouse
+  Mouse,
+  Touch
 };

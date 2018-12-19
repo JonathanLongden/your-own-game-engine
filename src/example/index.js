@@ -2,7 +2,7 @@
  * Your game engine show cases will be here.
  */
 
-import { Engine, WebGLRenderer, Keyboard, Mouse, rendererEvent } from '../engine';
+import { Engine, WebGLRenderer, Keyboard, Mouse, Touch, rendererEvent } from '../engine';
 
 // eslint-disable-next-line
 console.log('Your examples script is working well');
@@ -24,6 +24,7 @@ const renderer = new WebGLRenderer({
 
 const keyboard = new Keyboard();
 const mouse = new Mouse();
+const touch = new Touch();
 
 renderer.on(rendererEvent.UPDATE, () => {
   if (keyboard.pressed(87)) {
@@ -42,6 +43,11 @@ renderer.on(rendererEvent.UPDATE, () => {
       movementWheel: mouse.movementWheel
     });
   }
+
+  if (touch.pressed(0, 1)) {
+    // eslint-disable-next-line no-console
+    console.log('Two fingers touched', touch.getTouch(0));
+  }
 });
 
 renderer.on(rendererEvent.WEBGL_IS_NOT_SUPPORTED, err => {
@@ -52,7 +58,8 @@ renderer.on(rendererEvent.WEBGL_IS_NOT_SUPPORTED, err => {
 const engine = new Engine({
   renderer,
   keyboard,
-  mouse
+  mouse,
+  touch
 });
 
 engine.start();
