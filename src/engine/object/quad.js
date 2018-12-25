@@ -12,8 +12,8 @@ import { Object2D } from './object_2d';
  */
 
 export class Quad extends Object2D {
-  constructor() {
-    super([0, 0, 0, 1, 1, 0, 1, 1]);
+  constructor(sp) {
+    super([0, 0, 0, 1, 1, 0, 1, 1], sp);
   }
 }
 

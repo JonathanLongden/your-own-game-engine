@@ -78,9 +78,11 @@ export class ShaderProgram {
   }
 
   update(gl, attributes = {}, uniforms = {}) {
+    gl.useProgram(this.#glProgram);
+
     Object.keys(attributes).forEach(name => {
       const value = attributes[name];
-      const { value: prevValue, location, type, glBuffer } = this.#attriubtes[name];
+      const { value: prevValue, location, type, glBuffer } = this.#attributes[name];
 
       if (prevValue !== value) {
         this.#attributes[name].value = value;
@@ -172,6 +174,8 @@ export class ShaderProgram {
         }
       }
     });
+
+    gl.useProgram(null);
   }
 }
 

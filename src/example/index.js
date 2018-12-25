@@ -2,7 +2,18 @@
  * Your game engine show cases will be here.
  */
 
-import { Engine, WebGLRenderer, Keyboard, Mouse, Touch, rendererEvent } from '../engine';
+import {
+  Engine,
+  WebGLRenderer,
+  Keyboard,
+  Mouse,
+  Touch,
+  rendererEvent,
+  Scene,
+  Camera,
+  Texture,
+  Sprite
+} from '../engine';
 
 // eslint-disable-next-line
 console.log('Your examples script is working well');
@@ -62,4 +73,14 @@ const engine = new Engine({
   touch
 });
 
-engine.start();
+const scene = new Scene();
+const camera = new Camera();
+
+// Create sprite.
+const texture = new Texture(new Image(1024, 768));
+const sprite = new Sprite(texture);
+
+scene.add(camera);
+scene.add(sprite);
+
+engine.start(scene);

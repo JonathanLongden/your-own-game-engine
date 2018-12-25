@@ -5,6 +5,7 @@ import { checkWebGLSupport, createRenderingContext } from './webgl';
 import { rendererEvent } from './renderer_event';
 import { createError } from './error';
 import { RenderTimer } from './render_timer';
+import { RenderingQueue } from './rendering_queue';
 
 const defaultConfiguration = {
   fpsThreshold: 60
@@ -17,12 +18,15 @@ export class WebGLRenderer {
 
   #timer;
 
+  #queue;
+
   constructor(configuration = {}) {
     const { canvas } = Object.assign({}, defaultConfiguration, configuration);
 
     this.canvas = setupCanvas(canvas || createCanvas(), configuration);
     this.#eventEmitter = new EventEmitter();
     this.#timer = new RenderTimer(configuration.fpsThreshold);
+    this.#queue = configuration.queue || new RenderingQueue();
   }
 
   start() {
@@ -51,13 +55,13 @@ export class WebGLRenderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    this.#queue.prepare(gl);
+
     // Set first checkpoint.
     this.#timer.init();
   }
 
-  _render(...args) {
-    const [gl] = args;
-
+  _render(gl) {
     this.#timer.checkpoint();
 
     if (this.#timer.isReachedThreshold()) {
@@ -65,15 +69,26 @@ export class WebGLRenderer {
 
       this.#eventEmitter.emit(rendererEvent.UPDATE, this.#timer.delta);
 
-      this._renderFrame(gl);
+      this._renderFrame(gl, {
+        /* ctx */
+      });
     }
 
-    window.requestAnimationFrame(this._render.bind(this, ...args));
+    window.requestAnimationFrame(this._render.bind(this, gl));
   }
 
-  _renderFrame(gl) {
-    gl.clearColor(Math.random(), Math.random(), Math.random(), 0);
+  _renderFrame(gl, ctx) {
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    this.#queue.update(gl, ctx);
+  }
+
+  set queue(queue) {
+    this.#queue = queue;
+  }
+
+  get queue() {
+    return this.#queue;
   }
 }
 

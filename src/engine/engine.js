@@ -1,5 +1,6 @@
 import { WebGLRenderer, rendererEvent } from './renderer';
 import { Keyboard, Mouse, Touch } from './io';
+import { Scene } from './scene';
 
 const defaultConfiguration = {
   renderer: null,
@@ -25,9 +26,12 @@ export class Engine {
     ];
   }
 
-  start() {
+  start(scene) {
     this.#io.forEach(io => io.bind());
     this.#renderer.on(rendererEvent.UPDATE, () => this.#io.forEach(io => io.update()));
+
+    this.#renderer.queue = scene || new Scene();
+
     this.#renderer.start();
   }
 

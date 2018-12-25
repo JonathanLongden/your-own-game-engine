@@ -1,6 +1,12 @@
 import { mat3 } from 'gl-matrix';
 
 export class CameraTransform {
+  #tMatrix;
+
+  #sMatrix;
+
+  #vMatrix;
+
   constructor() {
     this.#tMatrix = mat3.fromTranslation(mat3.create(), [0, 0]);
     this.#sMatrix = mat3.fromScaling(mat3.create(), [1, 1]);
