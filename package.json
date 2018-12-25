@@ -38,6 +38,7 @@
   "dependencies": {
     "@babel/runtime": "^7.1.5",
     "core-decorators": "^0.20.0",
-    "fbemitter": "^2.1.1"
+    "fbemitter": "^2.1.1",
+    "gl-matrix": "^2.8.1"
   }
 }
