@@ -10,7 +10,15 @@ export class Scene extends RenderingQueue {
   }
 
   perObjRendering(obj, gl, ctx) {
-    obj.update(gl, { ...ctx, camera: this.#camera });
+    // tbd drawing without camera preparation?
+    if (obj !== this.#camera) {
+      obj.update(gl, { ...ctx, camera: this.#camera });
+
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, Math.floor(obj.glVertices.length / 2));
+      return;
+    }
+
+    obj.update(gl, ctx);
   }
 }
 

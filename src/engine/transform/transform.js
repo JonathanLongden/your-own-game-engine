@@ -17,6 +17,7 @@ export class Transform {
   }
 
   update() {
+    // tbd upd. only on changes.
     // Transpation x Rotation = TR.
     mat3.mul(this.#mMatrix, this.#tMatrix, this.#rMatrix);
 

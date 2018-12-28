@@ -35,6 +35,8 @@ export class Engine {
     this.#renderer.start();
   }
 
+  // Checking stream, please wait extra 5 minutes.
+
   _setupRenderer(renderer) {
     if (renderer && !(renderer instanceof WebGLRenderer)) {
       throw new Error('Unknown renderer, please provide "WeblGLRenderer" compatible interface');

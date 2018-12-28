@@ -21,7 +21,9 @@ export class RenderingQueue extends Renderable {
   }
 
   perObjRendering(obj, gl, ctx) {
-    obj.update(obj, gl, ctx);
+    obj.update(gl, ctx);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, Math.floor(obj.glVertices.length / 2));
   }
 
   add(obj) {

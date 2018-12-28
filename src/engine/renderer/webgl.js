@@ -1,7 +1,8 @@
 export function createRenderingContext(canvas) {
   return canvas.getContext('webgl', {
+    preserveDrawingBuffer: false,
     premultipliedAlpha: false,
-    alpha: false,
+    alpha: true,
     antialias: false
   });
 }

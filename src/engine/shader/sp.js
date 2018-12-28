@@ -61,7 +61,7 @@ export class ShaderProgram {
     gl.useProgram(this.#glProgram);
 
     // Keep generated attributes locations.
-    Object.keys(this.#attributes, name => {
+    Object.keys(this.#attributes).forEach(name => {
       const { location } = this.#attributes[name];
 
       if (typeof location === 'undefined') {
@@ -70,7 +70,7 @@ export class ShaderProgram {
     });
 
     // Keep generated uniforms locations.
-    Object.keys(this.#uniforms, name => {
+    Object.keys(this.#uniforms).forEach(name => {
       this.#uniforms[name].location = gl.getUniformLocation(this.#glProgram, name);
     });
 
@@ -78,8 +78,6 @@ export class ShaderProgram {
   }
 
   update(gl, attributes = {}, uniforms = {}) {
-    gl.useProgram(this.#glProgram);
-
     Object.keys(attributes).forEach(name => {
       const value = attributes[name];
       const { value: prevValue, location, type, glBuffer } = this.#attributes[name];
@@ -175,7 +173,11 @@ export class ShaderProgram {
       }
     });
 
-    gl.useProgram(null);
+    // gl.useProgram(null);
+  }
+
+  get glProgram() {
+    return this.#glProgram;
   }
 }
 

@@ -14,6 +14,7 @@ import {
   Texture,
   Sprite
 } from '../engine';
+import testImgUrl from './i/test.png';
 
 // eslint-disable-next-line
 console.log('Your examples script is working well');
@@ -73,14 +74,29 @@ const engine = new Engine({
   touch
 });
 
+console.log(innerWidth, innerHeight);
+
 const scene = new Scene();
-const camera = new Camera();
+const zoomFactor = 0.25;
+const quadView = Math.max(innerWidth, innerHeight) / Math.min(innerWidth, innerHeight) * zoomFactor;
+const camera = new Camera(quadView, quadView);
 
-// Create sprite.
-const texture = new Texture(new Image(1024, 768));
-const sprite = new Sprite(texture);
+const image = new Image();
 
-scene.add(camera);
-scene.add(sprite);
+function startExample(image) {
+  const texture = new Texture(image);
+  const sprite = new Sprite(texture);
 
-engine.start(scene);
+  scene.attachCamera(camera);
+  scene.add(sprite);
+
+  engine.start(scene);
+}
+
+// Prepare sprite
+image.onload = () => {
+  startExample(image);
+};
+
+// Trigger image loading.
+image.src = testImgUrl;

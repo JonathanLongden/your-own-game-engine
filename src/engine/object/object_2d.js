@@ -18,11 +18,11 @@ export class Object2D extends Renderable {
   prepare(gl) {
     super.prepare(gl);
 
-    this.#sp.prepare(gl);
+    this.#sp.prepare(gl); // tbd Each time?
   }
 
   update(gl) {
-    super.update(gl);
+    gl.useProgram(this.#sp.glProgram);
 
     this.#transform.update();
 

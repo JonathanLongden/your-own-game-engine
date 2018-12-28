@@ -1,6 +1,6 @@
 import { ShaderProgram } from './sp';
 import { Shader } from './shader';
-import { FLOAT_ARRAY_2, FLOAT_ARRAY_4, MAT_3, INT_1 } from './qualifier_types';
+import { FLOAT_ARRAY_2, MAT_3, INT_1 } from './qualifier_types';
 
 const attributes = {
   a_pos: {
@@ -8,7 +8,7 @@ const attributes = {
     type: FLOAT_ARRAY_2
   },
   a_tex: {
-    type: FLOAT_ARRAY_4
+    type: FLOAT_ARRAY_2
   }
 };
 

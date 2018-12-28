@@ -4,9 +4,9 @@ import { Renderable } from '../renderer/renderable';
 export class Camera extends Renderable {
   #transform;
 
-  constructor() {
+  constructor(width, height) {
     super();
-    this.#transform = new CameraTransform();
+    this.#transform = new CameraTransform(width, height);
   }
 
   update(gl, ctx) {

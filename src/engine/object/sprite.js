@@ -13,7 +13,7 @@ export class Sprite extends Quad {
   prepare(gl) {
     super.prepare(gl);
 
-    this.#texture.prepare(gl);
+    this.#texture.prepare(gl); // tbd Each time?
   }
 
   update(gl, ctx) {
@@ -26,9 +26,11 @@ export class Sprite extends Quad {
 
     this.sp.update(
       gl,
-      {},
       {
-        u_cm: gl.TEXTURE0,
+        a_tex: this.#texture.glTexels
+      },
+      {
+        u_cm: 0,
         u_v: camera.transform.vMatrix
       }
     );

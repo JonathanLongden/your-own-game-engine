@@ -32,13 +32,13 @@ export class WebGLRenderer {
   start() {
     const gl = createRenderingContext(this.canvas);
 
-    if (!checkWebGLSupport(gl)) {
-      this.#eventEmitter.emit(
-        rendererEvent.WEBGL_IS_NOT_SUPPORTED,
-        createError('WebGL is not supported')
-      );
-      return;
-    }
+    // if (!checkWebGLSupport(gl)) {
+    //   this.#eventEmitter.emit(
+    //     rendererEvent.WEBGL_IS_NOT_SUPPORTED,
+    //     createError('WebGL is not supported')
+    //   );
+    //   return;
+    // }
 
     this._prepare(gl);
 
@@ -50,8 +50,6 @@ export class WebGLRenderer {
   }
 
   _prepare(gl) {
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
@@ -69,15 +67,14 @@ export class WebGLRenderer {
 
       this.#eventEmitter.emit(rendererEvent.UPDATE, this.#timer.delta);
 
-      this._renderFrame(gl, {
-        /* ctx */
-      });
+      this._renderFrame(gl);
     }
 
     window.requestAnimationFrame(this._render.bind(this, gl));
   }
 
   _renderFrame(gl, ctx) {
+    gl.clearColor(0, 0, 0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     this.#queue.update(gl, ctx);
