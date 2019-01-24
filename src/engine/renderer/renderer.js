@@ -1,7 +1,8 @@
 import { pipe } from 'ramda';
 
 import { ProgramObject } from '../object';
-import { shaderPrograms } from './shader_programs';
+import { spriteShaderProgram } from './sprite_shader_program';
+import { rendererEvent } from '.';
 
 const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.useProgram(program);
@@ -19,7 +20,7 @@ const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.draw(Math.floor(target.vertices.length / 2));
 };
 
-const getTargetPrograms = ({ programs: p } = []) => (p.length && p) || [shaderPrograms[0]];
+const getTargetPrograms = ({ programs: p } = []) => (p.length && p) || [spriteShaderProgram];
 
 const getTargetUpdater = props => target => {
   getTargetPrograms(target).forEach(program => drawTargetByProgram({ ...props, target, program }));
@@ -30,7 +31,7 @@ const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
 };
 
 const prepareRenderer = ({ renderer }) => {
-  registerPrebuiltPrograms({ renderer, shaderPrograms });
+  registerPrebuiltPrograms({ renderer, shaderPrograms: [spriteShaderProgram] });
 
   renderer.setTransparentBlending();
   renderer.loadAllPrograms();
@@ -46,9 +47,11 @@ const requestNextFrame = pipe(
 );
 
 const render = props => {
-  const { scene, camera, renderer } = props;
+  const { scene, camera, renderer, shouldStop } = props;
 
   scene.children.forEach(getTargetUpdater({ renderer, scene, camera }));
+
+  if (shouldStop) return;
 
   requestNextFrame(props);
 };
@@ -90,8 +93,18 @@ const render = props => {
 //
 
 export const start = props => {
+  let shouldStop = false;
+
+  const stop = () => {
+    shouldStop = true;
+  };
+
+  props.renderer.emit(rendererEvent.START);
+
   prepareRenderer(props);
-  render(props);
+  render({ ...props, shouldStop });
+
+  return stop;
 };
 
 export const registerPrograms = ({ renderer, programs }) => {

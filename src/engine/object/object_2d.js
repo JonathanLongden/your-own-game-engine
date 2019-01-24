@@ -17,6 +17,18 @@ export class Object2D {
     this.#mMatrix = mat3.create();
   }
 
+  get translationMatrix() {
+    return this.#tMatrix;
+  }
+
+  get rotationMatrix() {
+    return this.#rMatrix;
+  }
+
+  get scaleMatrix() {
+    return this.#sMatrix;
+  }
+
   get modelMatrix() {
     return this.#mMatrix;
   }

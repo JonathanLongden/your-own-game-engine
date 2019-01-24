@@ -1,7 +1,7 @@
-import { Keyboard } from './keyboard';
-import { Mouse } from './mouse';
-import { Touch } from './touch';
+import { KeyboardController } from './keyboard_controller';
+import { MouseController } from './mouse_controller';
+import { TouchController } from './touch_controller';
 
-export { Keyboard, Mouse, Touch };
+export { KeyboardController, MouseController, TouchController };
 
-export default { Keyboard, Mouse, Touch };
+export default { KeyboardController, MouseController, TouchController };

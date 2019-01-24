@@ -1,8 +1,6 @@
 import { autobind } from 'core-decorators';
 
-import { Controller } from './controller';
-
-export class Mouse extends Controller {
+export class MouseController {
   #pressedKeys;
 
   #x;
@@ -18,8 +16,6 @@ export class Mouse extends Controller {
   #movementWheel;
 
   constructor() {
-    super();
-
     this.#pressedKeys = {};
     this.#wheel = 0;
     this.#movementX = 0;
@@ -137,4 +133,4 @@ export class Mouse extends Controller {
   }
 }
 
-export default Mouse;
+export default MouseController;

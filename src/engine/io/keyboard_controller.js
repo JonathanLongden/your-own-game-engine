@@ -1,13 +1,9 @@
 import { autobind } from 'core-decorators';
 
-import { Controller } from './controller';
-
-export class Keyboard extends Controller {
+export class KeyboardController {
   #pressedKeys;
 
   constructor() {
-    super();
-
     this.#pressedKeys = {};
   }
 
@@ -59,4 +55,4 @@ export class Keyboard extends Controller {
   }
 }
 
-export default Keyboard;
+export default KeyboardController;

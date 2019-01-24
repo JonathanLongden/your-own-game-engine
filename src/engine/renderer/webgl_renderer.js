@@ -15,26 +15,7 @@ import {
   MAT_2,
   MAT_3
 } from './webgl_types';
-
-export const COLOR_MAP = 'color_map';
-
-export const DEFAULT_SP_NAME = '_default';
-
-export class Scene {
-  #children;
-
-  constructor() {
-    this.#children = [];
-  }
-
-  add(child) {
-    this.#children.push(child);
-  }
-
-  get children() {
-    return this.#children;
-  }
-}
+import { COLOR_MAP } from './texture_map';
 
 export class WebGLRenderer extends EventEmitter {
   #gl;
@@ -326,3 +307,5 @@ export class WebGLRenderer extends EventEmitter {
     }
   }
 }
+
+export default WebGLRenderer;

@@ -1,9 +1,8 @@
 import { FLOAT_ARRAY_2, MAT_3, INT_1 } from './webgl_types';
 
-export const shaderPrograms = [
-  {
-    name: '_default',
-    vSource: `
+export const spriteShaderProgram = {
+  name: '_sprite_shader_program',
+  vSource: `
         #ifdef GL_FRAGMENT_PRECISION_HIGH
             precision highp float;
         #else
@@ -20,7 +19,7 @@ export const shaderPrograms = [
             v_tex = a_tex;
         }
     `,
-    fSource: `
+  fSource: `
         #ifdef GL_FRAGMENT_PRECISION_HIGH
             precision highp float;
         #else
@@ -33,37 +32,36 @@ export const shaderPrograms = [
             gl_FragColor = texture2D(u_cm, v_tex);
         }
     `,
+  attributes: [
+    {
+      name: 'a_pos',
+      location: 0,
+      type: FLOAT_ARRAY_2
+    },
+    {
+      name: 'a_tex',
+      type: FLOAT_ARRAY_2
+    }
+  ],
+  uniforms: [
+    {
+      name: 'u_v',
+      type: MAT_3
+    },
+    { name: 'u_m', type: MAT_3 },
+    { name: 'u_cm', type: INT_1 }
+  ],
+  onUpdate: ({ target, camera }) => ({
     attributes: [
-      {
-        name: 'a_pos',
-        location: 0,
-        type: FLOAT_ARRAY_2
-      },
-      {
-        name: 'a_tex',
-        type: FLOAT_ARRAY_2
-      }
+      { name: 'a_pos', value: target.vertices },
+      { name: 'a_tex', value: target.texels }
     ],
     uniforms: [
-      {
-        name: 'u_v',
-        type: MAT_3
-      },
-      { name: 'u_m', type: MAT_3 },
-      { name: 'u_cm', type: INT_1 }
-    ],
-    onUpdate: ({ target, camera }) => ({
-      attributes: [
-        { name: 'a_pos', value: target.vertices },
-        { name: 'a_tex', value: target.texels }
-      ],
-      uniforms: [
-        { name: 'u_m', value: target.mMatrix },
-        { name: 'u_v', value: camera.viewMatrix },
-        { name: 'u_cm', value: 0 }
-      ]
-    })
-  }
-];
+      { name: 'u_m', value: target.mMatrix },
+      { name: 'u_v', value: camera.viewMatrix },
+      { name: 'u_cm', value: 0 }
+    ]
+  })
+};
 
-export default shaderPrograms;
+export default spriteShaderProgram;
