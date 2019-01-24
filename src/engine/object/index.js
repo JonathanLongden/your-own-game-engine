@@ -1,5 +1,7 @@
 import { Sprite } from './sprite';
+import { Object2D } from './object_2d';
+import { ProgramObject } from './program_object';
 
-export { Sprite };
+export { Sprite, Object2D, ProgramObject };
 
-export default { Sprite };
+export default { Sprite, Object2D, ProgramObject };

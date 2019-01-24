@@ -1,22 +1,20 @@
-import { CameraTransform } from '../transform';
-import { Renderable } from '../renderer/renderable';
+import { mat3 } from 'gl-matrix';
 
-export class Camera extends Renderable {
-  #transform;
+export class Camera {
+  #tMatrix;
+
+  #sMatrix;
+
+  #vMatrix;
 
   constructor(width, height) {
-    super();
-    this.#transform = new CameraTransform(width, height);
+    this.#tMatrix = mat3.fromTranslation(mat3.create(), [width - 1, 1 - height]);
+    this.#sMatrix = mat3.fromScaling(mat3.create(), [width, height]);
+    this.#vMatrix = mat3.create();
   }
 
-  update(gl, ctx) {
-    super.update(gl, ctx);
-
-    this.#transform.update();
-  }
-
-  get transform() {
-    return this.#transform;
+  get viewMatrix() {
+    return this.#vMatrix;
   }
 }
 

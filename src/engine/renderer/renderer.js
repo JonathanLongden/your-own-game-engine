@@ -1,92 +1,105 @@
-import { EventEmitter } from 'fbemitter';
+import { pipe } from 'ramda';
 
-import { createCanvas, setupCanvas } from './canvas';
-import { checkWebGLSupport, createRenderingContext } from './webgl';
-import { rendererEvent } from './renderer_event';
-import { createError } from './error';
-import { RenderTimer } from './render_timer';
-import { RenderingQueue } from './rendering_queue';
+import { ProgramObject } from '../object';
+import { shaderPrograms } from './shader_programs';
 
-const defaultConfiguration = {
-  fpsThreshold: 60
+const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
+  renderer.useProgram(program);
+
+  // Update current shader program attributes and uniforms.
+  program.onUpdate({ target, scene, camera });
+
+  // Bind current shader program attributes and uniforms.
+  renderer.bindProgramAttributes();
+  renderer.bindProgramUniforms();
+
+  // Bind target's textures.
+  [target.colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
+
+  renderer.draw(Math.floor(target.vertices.length / 2));
 };
 
-export class WebGLRenderer {
-  canvas;
+const getTargetPrograms = ({ programs: p } = []) => (p.length && p) || [shaderPrograms[0]];
 
-  #eventEmitter;
+const getTargetUpdater = props => target => {
+  getTargetPrograms(target).forEach(program => drawTargetByProgram({ ...props, target, program }));
+};
 
-  #timer;
+const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
+  shaderPrograms.forEach(renderer.registerProgram);
+};
 
-  #queue;
+const prepareRenderer = ({ renderer }) => {
+  registerPrebuiltPrograms({ renderer, shaderPrograms });
 
-  constructor(configuration = {}) {
-    const { canvas } = Object.assign({}, defaultConfiguration, configuration);
+  renderer.setTransparentBlending();
+  renderer.loadAllPrograms();
+  renderer.loadAllTextures();
+};
 
-    this.canvas = setupCanvas(canvas || createCanvas(), configuration);
-    this.#eventEmitter = new EventEmitter();
-    this.#timer = new RenderTimer(configuration.fpsThreshold);
-    this.#queue = configuration.queue || new RenderingQueue();
-  }
+// eslint-disable-next-line no-use-before-define
+const createNextFrameRenderer = props => ts => render({ ...props, dt: ts - props.ts });
 
-  start() {
-    const gl = createRenderingContext(this.canvas);
+const requestNextFrame = pipe(
+  createNextFrameRenderer,
+  nextRender => window.requestAnimationFrame(nextRender)
+);
 
-    // if (!checkWebGLSupport(gl)) {
-    //   this.#eventEmitter.emit(
-    //     rendererEvent.WEBGL_IS_NOT_SUPPORTED,
-    //     createError('WebGL is not supported')
-    //   );
-    //   return;
-    // }
+const render = props => {
+  const { scene, camera, renderer } = props;
 
-    this._prepare(gl);
+  scene.children.forEach(getTargetUpdater({ renderer, scene, camera }));
 
-    this._render(gl);
-  }
+  requestNextFrame(props);
+};
 
-  on(event, handler) {
-    this.#eventEmitter.addListener(event, handler);
-  }
+// const renderer = new WebGLRenderer(canvas);
+// const scene = new Scene();
+// const camera = new Camera({ width: 800, height: 600 })
+//
+// const programs = [{
+//  name: 'my-own-program',
+//  vSource: 'vertex data source',
+//  fSource: 'fragment data source'
+//  attributes: [{ name: 'a_pos', type: FLOAT_ARRAY_2 }],
+//  uniforms: [{ name: 'u_m', type: MAT_3}],
+//  onUpdate: ({ target, scene, camera }) => ({
+//    attributes: [{ name: 'a_pos', value: target.vertices}],
+//    uniforms: [{ name: 'u_m', value: target.mMatrix }]
+//  })
+// }]
+//
+// const image = new Image(); // Imagine that is already loaded.
+//
+// const textures = [{
+//   name: 'my-texture',
+//   type: COLOR_MAP,
+//   image
+// }]
+//
+// registerPrograms({ renderer, programs })
+// registerTextures({ renderer, textures })
+//
+// const sprite = new Sprite({ colorMapTexture: texture[0]})
+//
+// const spriteMultiProgram = withPrograms(programs)(sprite)
+//
+// scene.add(spriteMultiProgram);
+//
+// start({ renderer, scene, camera })
+//
 
-  _prepare(gl) {
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+export const start = props => {
+  prepareRenderer(props);
+  render(props);
+};
 
-    this.#queue.prepare(gl);
+export const registerPrograms = ({ renderer, programs }) => {
+  programs.forEach(renderer.registerProgram);
+};
 
-    // Set first checkpoint.
-    this.#timer.init();
-  }
+export const registerTextures = ({ renderer, textures }) => {
+  textures.forEach(renderer.registerTexture);
+};
 
-  _render(gl) {
-    this.#timer.checkpoint();
-
-    if (this.#timer.isReachedThreshold()) {
-      this.#timer.reduce();
-
-      this.#eventEmitter.emit(rendererEvent.UPDATE, this.#timer.delta);
-
-      this._renderFrame(gl);
-    }
-
-    window.requestAnimationFrame(this._render.bind(this, gl));
-  }
-
-  _renderFrame(gl, ctx) {
-    gl.clearColor(0, 0, 0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    this.#queue.update(gl, ctx);
-  }
-
-  set queue(queue) {
-    this.#queue = queue;
-  }
-
-  get queue() {
-    return this.#queue;
-  }
-}
-
-export default WebGLRenderer;
+export const withPrograms = programs => target => new ProgramObject(target, programs);

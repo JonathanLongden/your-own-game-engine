@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "./node_modules/.bin/babel src/engine/index.js -d .dist/engine --env-name production",
-    "serve": "./node_modules/.bin/webpack-dev-server",
+    "serve": "./node_modules/.bin/webpack-dev-server -d",
     "lint": "./node_modules/.bin/eslint --fix --ext .js src/*"
   },
   "pre-commit": [
@@ -40,6 +40,8 @@
     "@babel/runtime": "^7.1.5",
     "core-decorators": "^0.20.0",
     "fbemitter": "^2.1.1",
-    "gl-matrix": "^2.8.1"
+    "gl-matrix": "^2.8.1",
+    "immutable": "^4.0.0-rc.12",
+    "ramda": "^0.26.1"
   }
 }

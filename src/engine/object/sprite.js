@@ -1,43 +1,21 @@
-import { Quad } from './quad';
-import { simpleShaderProgram } from '../shader/simple_sp';
+import Object2D from './object_2d';
 
-export class Sprite extends Quad {
-  #texture;
+export class Sprite extends Object2D {
+  #colorMapTexture;
 
-  constructor(texture) {
-    super(simpleShaderProgram);
+  constructor(props) {
+    super({ ...props, vertices: Float32Array.from([0, 0, 0, 1, 1, 0, 1, 1]) });
 
-    this.#texture = texture;
+    this.#colorMapTexture = props.colorMapTexture;
+    this.#texels = Float32Array.from([0, 0, 0, 1, 1, 0, 1, 1]);
   }
 
-  prepare(gl) {
-    super.prepare(gl);
-
-    this.#texture.prepare(gl); // tbd Each time?
+  get colorMapTexture() {
+    return this.#colorMapTexture;
   }
 
-  update(gl, ctx) {
-    super.update(gl);
-
-    const { camera } = ctx;
-
-    // Color map texture (TEXTURE0) update.
-    this.#texture.update(gl, gl.TEXTURE0);
-
-    this.sp.update(
-      gl,
-      {
-        a_tex: this.#texture.glTexels
-      },
-      {
-        u_cm: 0,
-        u_v: camera.transform.vMatrix
-      }
-    );
-  }
-
-  get texture() {
-    return this.#texture;
+  get texels() {
+    return this.#texels;
   }
 }
 

@@ -35,5 +35,6 @@ module.exports = {
     filename: 'example.js'
   },
   plugins: [new HtmlWebpackPlugin()],
-  mode: 'development'
+  mode: 'development',
+  devtool: 'inline-cheap-source-map'
 };

@@ -1,52 +1,24 @@
-import { Transform } from '../transform';
-import { Renderable } from '../renderer';
+import { mat3 } from 'gl-matrix';
 
-export class Object2D extends Renderable {
-  #glVertices;
+export class Object2D {
+  #tMatrix;
 
-  #sp;
+  #rMatrix;
 
-  #transform;
+  #sMatrix;
 
-  constructor(vertices, sp) {
-    super();
-    this.#glVertices = Float32Array.from(vertices);
-    this.#sp = sp;
-    this.#transform = new Transform();
+  #mMatrix;
+
+  constructor({ vertices, translation, rotation, scale } = {}) {
+    this.#vertices = vertices;
+    this.#tMatrix = mat3.fromTranslation(mat3.create(), translation || [0, 0]);
+    this.#rMatrix = mat3.fromRotation(mat3.create(), rotation || 0);
+    this.#sMatrix = mat3.fromScaling(mat3.create(), scale || [1, 1]);
+    this.#mMatrix = mat3.create();
   }
 
-  prepare(gl) {
-    super.prepare(gl);
-
-    this.#sp.prepare(gl); // tbd Each time?
-  }
-
-  update(gl) {
-    gl.useProgram(this.#sp.glProgram);
-
-    this.#transform.update();
-
-    this.#sp.update(
-      gl,
-      {
-        a_pos: this.#glVertices
-      },
-      {
-        u_m: this.#transform.mMatrix
-      }
-    );
-  }
-
-  get glVertices() {
-    return this.#glVertices;
-  }
-
-  get transform() {
-    return this.#transform;
-  }
-
-  get sp() {
-    return this.#sp;
+  get modelMatrix() {
+    return this.#mMatrix;
   }
 }
 
