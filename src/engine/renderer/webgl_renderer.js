@@ -1,7 +1,5 @@
 import { EventEmitter } from 'fbemitter';
 
-import { createRenderingContext } from './webgl';
-
 import {
   INT_1,
   FLOAT_1,
@@ -28,14 +26,25 @@ export class WebGLRenderer extends EventEmitter {
 
   #blending;
 
-  constructor({ canvas }) {
+  #textures;
+
+  #fpsThreshold;
+
+  constructor({ canvas, fpsThreshold = 60 }) {
     super();
-    this.#gl = createRenderingContext(canvas);
+
+    this.#gl = canvas.getContext('webgl', {
+      preserveDrawingBuffer: false,
+      premultipliedAlpha: false,
+      alpha: true,
+      antialias: false
+    });
     this.#blending = false;
     this.#boundProgramName = null;
     this.#boundTextureName = null;
     this.#programs = {};
     this.#textures = {};
+    this.#fpsThreshold = fpsThreshold;
   }
 
   draw(numOfVertices) {
@@ -68,7 +77,7 @@ export class WebGLRenderer extends EventEmitter {
   }
 
   loadAllPrograms() {
-    Object.keys(this.#programs).forEach(this.loadProgram);
+    Object.keys(this.#programs).forEach(p => this.loadProgram(p));
   }
 
   loadProgram(programName) {
@@ -95,9 +104,9 @@ export class WebGLRenderer extends EventEmitter {
     );
 
     // Define buffers and locations for attributes.
-    attributes.forEach(({ name, location, type }) => {
+    attributes.forEach(({ name, location, type }, idx) => {
       if ([FLOAT_ARRAY_1, FLOAT_ARRAY_2, FLOAT_ARRAY_3, FLOAT_ARRAY_4].includes(type)) {
-        this.#programs[programName].attributes[name].glBuffer = this.#gl.createBuffer();
+        this.#programs[programName].attributes[idx].glBuffer = this.#gl.createBuffer();
       }
 
       if (location) {
@@ -116,9 +125,9 @@ export class WebGLRenderer extends EventEmitter {
     this.useProgram(programName);
 
     // Keep attributes locations.
-    attributes.forEach(({ name, location }) => {
+    attributes.forEach(({ name, location }, idx) => {
       if (typeof location === 'undefined') {
-        this.#programs[programName].attributes[name].location = this.#gl.getAttribLocation(
+        this.#programs[programName].attributes[idx].location = this.#gl.getAttribLocation(
           glProgram,
           name
         );
@@ -126,8 +135,8 @@ export class WebGLRenderer extends EventEmitter {
     });
 
     // Keep uniforms locations.
-    uniforms.forEach(({ name }) => {
-      this.#programs[programName].uniforms[name].location = this.#gl.getUniformLocation(
+    uniforms.forEach(({ name }, idx) => {
+      this.#programs[programName].uniforms[idx].location = this.#gl.getUniformLocation(
         glProgram,
         name
       );
@@ -175,23 +184,27 @@ export class WebGLRenderer extends EventEmitter {
   }
 
   loadAllTextures() {
-    Object.keys(this.#textures).forEach(this.loadTexture);
+    Object.keys(this.#textures).forEach(t => this.loadTexture(t));
   }
 
   setAttributeValue(name, value) {
-    this.#programs[this.#boundProgramName].attributes[name].value = value;
+    const idx = this.#programs[this.#boundProgramName].attributes.findIndex(
+      attr => attr.name === name
+    );
+    this.#programs[this.#boundProgramName].attributes[idx].value = value;
   }
 
   setUniformValue(name, value) {
-    this.#programs[this.#boundProgramName].uniforms[name].value = value;
+    const idx = this.#programs[this.#boundProgramName].uniforms.findIndex(
+      uniform => uniform.name === name
+    );
+    this.#programs[this.#boundProgramName].uniforms[idx].value = value;
   }
 
   bindProgramAttributes() {
-    const program = this.#programs[this.#boundProgramName];
+    const { attributes } = this.#programs[this.#boundProgramName];
 
-    Object.keys(program.attributes).forEach(name => {
-      const { location, value, type, glBuffer } = program.attributes[name];
-
+    attributes.forEach(({ name, location, value, type, glBuffer }) => {
       let attrSize = 0;
 
       switch (type) {
@@ -228,7 +241,7 @@ export class WebGLRenderer extends EventEmitter {
         this.#gl.bindBuffer(this.#gl.ARRAY_BUFFER, glBuffer);
         this.#gl.vertexAttribPointer(location, attrSize, this.#gl.FLOAT, false, 0, 0);
         this.#gl.enableVertexAttribArray(location);
-        this.#gl.bufferData(this.#gl.ARRAY_BUFFER, Float32Array.from(value), this.#gl.STATIC_DRAW);
+        this.#gl.bufferData(this.#gl.ARRAY_BUFFER, value, this.#gl.STATIC_DRAW);
         this.#gl.bindBuffer(this.#gl.ARRAY_BUFFER, null);
       }
     });
@@ -284,8 +297,12 @@ export class WebGLRenderer extends EventEmitter {
       if (this.#boundProgramName === programName) return;
 
       this.#gl.useProgram(this.#programs[programName].glProgram);
+
+      this.#boundProgramName = programName;
     } else {
       this.#gl.useProgram(null);
+
+      this.#boundProgramName = null;
     }
   }
 
@@ -300,11 +317,14 @@ export class WebGLRenderer extends EventEmitter {
       };
 
       this.#gl.activeTexture(textureTypeIds[type]);
-
       this.#gl.bindTexture(this.#gl.TEXTURE_2D, glTexture);
     } else {
       this.#gl.bindTexture(this.#gl.TEXTURE_2D, null);
     }
+  }
+
+  get fpsThreshold() {
+    return this.#fpsThreshold;
   }
 }
 

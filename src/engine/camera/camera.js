@@ -10,7 +10,7 @@ export class Camera {
   constructor({ width, height }) {
     this.#tMatrix = mat3.fromTranslation(mat3.create(), [width - 1, 1 - height]);
     this.#sMatrix = mat3.fromScaling(mat3.create(), [width, height]);
-    this.#vMatrix = mat3.create();
+    this.#vMatrix = mat3.mul(mat3.create(), this.#tMatrix, this.#sMatrix);
   }
 
   get translationMatrix() {

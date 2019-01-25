@@ -33,32 +33,37 @@ image.onload = () => {
 
   const { innerWidth, innerHeight } = window;
 
-  // const fpsThreshold = 60; // fps.
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 
   const renderer = new WebGLRenderer({
-    canvas
-    // width: innerWidth,
-    // height: innerHeight,
-    // fpsThreshold: 1000 / fpsThreshold // ms
+    canvas,
+    fpsThreshold: 15 // FPS.
   });
 
   const keyboardController = new KeyboardController();
   const mouseController = new MouseController();
   const touchController = new TouchController();
 
-  renderer.on(rendererEvent.START, () => {
+  renderer.addListener(rendererEvent.START, () => {
     keyboardController.bind();
     mouseController.bind();
     touchController.bind();
+
+    // eslint-disable-next-line no-console
+    console.log('Rendering started');
   });
 
-  renderer.on(rendererEvent.STOP, () => {
+  renderer.addListener(rendererEvent.STOP, () => {
     keyboardController.unbind();
     mouseController.unbind();
     touchController.unbind();
+
+    // eslint-disable-next-line no-console
+    console.log('Rendering stopped');
   });
 
-  renderer.on(rendererEvent.UPDATE, () => {
+  renderer.addListener(rendererEvent.UPDATE, ({ dt }) => {
     mouseController.update();
     touchController.update();
 
@@ -83,11 +88,9 @@ image.onload = () => {
       // eslint-disable-next-line no-console
       console.log('Two fingers touched', touchController.getTouch(0));
     }
-  });
 
-  renderer.on(rendererEvent.WEBGL_IS_NOT_SUPPORTED, err => {
     // eslint-disable-next-line no-console
-    console.error(err.message);
+    console.log(`FPS ${Math.round(1000 / dt)}`);
   });
 
   const scene = new Scene();
@@ -108,14 +111,15 @@ image.onload = () => {
 
   registerTextures({ renderer, textures });
 
-  for (let i = 0, l = 5000; i < l; i += 1) {
-    scene.add(new Sprite({ colorMap: textures[0] }));
-  }
+  const sprite = new Sprite({ colorMapTexture: textures[0] });
+
+  scene.add(sprite);
 
   const stop = start({ renderer, scene, camera });
 
-  // Stop renderer after 15 seconds.
-  setTimeout(() => stop(), 15000);
+  // Stop rendering after 5 seconds.
+  // eslint-disable-next-line no-console
+  setTimeout(stop, 5000);
 };
 
 // Trigger image loading.

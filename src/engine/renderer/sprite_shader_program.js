@@ -53,12 +53,12 @@ export const spriteShaderProgram = {
   ],
   onUpdate: ({ target, camera }) => ({
     attributes: [
-      { name: 'a_pos', value: target.vertices },
-      { name: 'a_tex', value: target.texels }
+      { name: 'a_pos', value: Float32Array.from(target.vertices) },
+      { name: 'a_tex', value: Float32Array.from(target.texels) }
     ],
     uniforms: [
-      { name: 'u_m', value: target.mMatrix },
-      { name: 'u_v', value: camera.viewMatrix },
+      { name: 'u_m', value: Float32Array.from(target.modelMatrix) },
+      { name: 'u_v', value: Float32Array.from(camera.viewMatrix) },
       { name: 'u_cm', value: 0 }
     ]
   })
