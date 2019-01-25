@@ -53,10 +53,14 @@ export class WebGLRenderer extends EventEmitter {
 
   enableBlending() {
     this.#blending = true;
+
+    this.#gl.enable(this.#gl.BLEND);
   }
 
   disableBlending() {
     this.#blending = false;
+
+    this.#gl.disable(this.#gl.BLEND);
   }
 
   setTransparentBlending() {

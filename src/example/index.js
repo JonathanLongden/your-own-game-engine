@@ -5,6 +5,7 @@
 import { Camera } from '../engine/camera';
 import { Scene } from '../engine/scene';
 import { Sprite } from '../engine/object';
+import { rotate, scale, transform, translateTo } from '../engine/transform';
 import { KeyboardController, MouseController, TouchController } from '../engine/io';
 import {
   WebGLRenderer,
@@ -38,12 +39,43 @@ image.onload = () => {
 
   const renderer = new WebGLRenderer({
     canvas,
-    fpsThreshold: 15 // FPS.
+    fpsThreshold: 60 // FPS.
   });
 
   const keyboardController = new KeyboardController();
   const mouseController = new MouseController();
   const touchController = new TouchController();
+
+  const scene = new Scene();
+
+  const minSize = Math.min(innerWidth, innerHeight);
+  const sizeFactor = 0.25;
+  const width = (minSize / innerWidth) * sizeFactor;
+  const height = (minSize / innerHeight) * sizeFactor;
+  const camera = new Camera({ width, height });
+
+  const textures = [
+    {
+      name: 'my-texture',
+      type: COLOR_MAP,
+      image
+    }
+  ];
+
+  registerTextures({ renderer, textures });
+
+  for (let i = 0; i < 770; i += 1) {
+    const sprite = new Sprite({ colorMapTexture: textures[0] });
+
+    transform(
+      translateTo([
+        (Math.random() > 0.5 ? 1 : -1) * Math.random() * 25,
+        (Math.random() > 0.5 ? 1 : -1) * Math.random() * 25
+      ])
+    )(sprite);
+
+    scene.add(sprite);
+  }
 
   renderer.addListener(rendererEvent.START, () => {
     keyboardController.bind();
@@ -89,37 +121,18 @@ image.onload = () => {
       console.log('Two fingers touched', touchController.getTouch(0));
     }
 
+    transform(rotate(0.005))(camera);
+
     // eslint-disable-next-line no-console
     console.log(`FPS ${Math.round(1000 / dt)}`);
+
+    scene.children.forEach(obj => transform(scale([0.999, 0.999]))(obj));
   });
-
-  const scene = new Scene();
-
-  const minSize = Math.min(innerWidth, innerHeight);
-  const sizeFactor = 0.25;
-  const width = (minSize / innerWidth) * sizeFactor;
-  const height = (minSize / innerHeight) * sizeFactor;
-  const camera = new Camera({ width, height });
-
-  const textures = [
-    {
-      name: 'my-texture',
-      type: COLOR_MAP,
-      image
-    }
-  ];
-
-  registerTextures({ renderer, textures });
-
-  const sprite = new Sprite({ colorMapTexture: textures[0] });
-
-  scene.add(sprite);
 
   const stop = start({ renderer, scene, camera });
 
-  // Stop rendering after 5 seconds.
-  // eslint-disable-next-line no-console
-  setTimeout(stop, 5000);
+  // Stop rendering after 15 seconds.
+  setTimeout(stop, 15000);
 };
 
 // Trigger image loading.

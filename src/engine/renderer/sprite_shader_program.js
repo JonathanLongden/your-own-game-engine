@@ -10,12 +10,12 @@ export const spriteShaderProgram = {
         #endif
         attribute vec2 a_pos;
         attribute vec2 a_tex;
-        uniform mat3 u_v;
+        uniform mat3 u_vp;
         uniform mat3 u_m;
         varying vec2 v_tex;
         void main() {
             vec2 pos = a_pos * 2.0 - 1.0;
-            gl_Position = vec4((u_v * u_m * vec3(pos, 1)).xy, 1.0, 1.0);
+            gl_Position = vec4((u_vp * u_m * vec3(pos, 1)).xy, 1.0, 1.0);
             v_tex = a_tex;
         }
     `,
@@ -45,7 +45,7 @@ export const spriteShaderProgram = {
   ],
   uniforms: [
     {
-      name: 'u_v',
+      name: 'u_vp',
       type: MAT_3
     },
     { name: 'u_m', type: MAT_3 },
@@ -53,12 +53,12 @@ export const spriteShaderProgram = {
   ],
   onUpdate: ({ target, camera }) => ({
     attributes: [
-      { name: 'a_pos', value: Float32Array.from(target.vertices) },
-      { name: 'a_tex', value: Float32Array.from(target.texels) }
+      { name: 'a_pos', value: target.vertices },
+      { name: 'a_tex', value: target.texels }
     ],
     uniforms: [
-      { name: 'u_m', value: Float32Array.from(target.modelMatrix) },
-      { name: 'u_v', value: Float32Array.from(camera.viewMatrix) },
+      { name: 'u_m', value: target.modelMatrix },
+      { name: 'u_vp', value: camera.viewProjectionMatrix },
       { name: 'u_cm', value: 0 }
     ]
   })
