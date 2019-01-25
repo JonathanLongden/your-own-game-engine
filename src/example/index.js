@@ -2,64 +2,125 @@
  * Your game engine show cases will be here.
  */
 
-import { Engine, WebGLRenderer, Keyboard, Mouse, Touch, rendererEvent } from '../engine';
+import { Camera } from '../engine/camera';
+import { Scene } from '../engine/scene';
+import { Sprite } from '../engine/object';
+import { KeyboardController, MouseController, TouchController } from '../engine/io';
+import {
+  WebGLRenderer,
+  rendererEvent,
+  start,
+  registerTextures,
+  COLOR_MAP
+} from '../engine/renderer';
+
+import testImgUrl from './i/test.png';
 
 // eslint-disable-next-line
 console.log('Your examples script is working well');
 
-const canvas = document.createElement('canvas');
+const image = new Image();
 
-window.document.body.appendChild(canvas);
+// Prepare sprite
+image.onload = () => {
+  // re-style body object.
+  window.document.body.style.margin = 0;
+  window.document.body.style.padding = 0;
 
-const { innerWidth, innerHeight } = window;
+  const canvas = document.createElement('canvas');
 
-const fpsThreshold = 5; // fps.
+  window.document.body.appendChild(canvas);
 
-const renderer = new WebGLRenderer({
-  canvas,
-  width: innerWidth,
-  height: innerHeight,
-  fpsThreshold: 1000 / fpsThreshold // ms
-});
+  const { innerWidth, innerHeight } = window;
 
-const keyboard = new Keyboard();
-const mouse = new Mouse();
-const touch = new Touch();
+  canvas.width = innerWidth;
+  canvas.height = innerHeight;
 
-renderer.on(rendererEvent.UPDATE, () => {
-  if (keyboard.pressed(87)) {
+  const renderer = new WebGLRenderer({
+    canvas,
+    fpsThreshold: 15 // FPS.
+  });
+
+  const keyboardController = new KeyboardController();
+  const mouseController = new MouseController();
+  const touchController = new TouchController();
+
+  renderer.addListener(rendererEvent.START, () => {
+    keyboardController.bind();
+    mouseController.bind();
+    touchController.bind();
+
     // eslint-disable-next-line no-console
-    console.log('Key "W" triggered');
-  }
+    console.log('Rendering started');
+  });
 
-  if (mouse.pressed(0)) {
+  renderer.addListener(rendererEvent.STOP, () => {
+    keyboardController.unbind();
+    mouseController.unbind();
+    touchController.unbind();
+
     // eslint-disable-next-line no-console
-    console.log('Mouse "0" triggered', {
-      x: mouse.x,
-      y: mouse.y,
-      wheel: mouse.wheel,
-      movementX: mouse.movementX,
-      movementY: mouse.movementY,
-      movementWheel: mouse.movementWheel
-    });
-  }
+    console.log('Rendering stopped');
+  });
 
-  if (touch.pressed(0, 1)) {
+  renderer.addListener(rendererEvent.UPDATE, ({ dt }) => {
+    mouseController.update();
+    touchController.update();
+
+    if (keyboardController.pressed(87)) {
+      // eslint-disable-next-line no-console
+      console.log('Key "W" triggered');
+    }
+
+    if (mouseController.pressed(0)) {
+      // eslint-disable-next-line no-console
+      console.log('Mouse "0" triggered', {
+        x: mouseController.x,
+        y: mouseController.y,
+        wheel: mouseController.wheel,
+        movementX: mouseController.movementX,
+        movementY: mouseController.movementY,
+        movementWheel: mouseController.movementWheel
+      });
+    }
+
+    if (touchController.pressed(0, 1)) {
+      // eslint-disable-next-line no-console
+      console.log('Two fingers touched', touchController.getTouch(0));
+    }
+
     // eslint-disable-next-line no-console
-    console.log('Two fingers touched', touch.getTouch(0));
-  }
-});
+    console.log(`FPS ${Math.round(1000 / dt)}`);
+  });
 
-renderer.on(rendererEvent.WEBGL_IS_NOT_SUPPORTED, err => {
+  const scene = new Scene();
+
+  const minSize = Math.min(innerWidth, innerHeight);
+  const sizeFactor = 0.25;
+  const width = (minSize / innerWidth) * sizeFactor;
+  const height = (minSize / innerHeight) * sizeFactor;
+  const camera = new Camera({ width, height });
+
+  const textures = [
+    {
+      name: 'my-texture',
+      type: COLOR_MAP,
+      image
+    }
+  ];
+
+  registerTextures({ renderer, textures });
+
+  const sprite = new Sprite({ colorMapTexture: textures[0] });
+
+  scene.add(sprite);
+
+  const stop = start({ renderer, scene, camera });
+
+  // Stop rendering after 5 seconds.
   // eslint-disable-next-line no-console
-  console.error(err.message);
-});
+  setTimeout(stop, 5000);
+};
 
-const engine = new Engine({
-  renderer,
-  keyboard,
-  mouse,
-  touch
-});
-
-engine.start();
+// Trigger image loading.
+image.src = testImgUrl;

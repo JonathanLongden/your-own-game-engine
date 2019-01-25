@@ -1,13 +1,9 @@
 import { autobind } from 'core-decorators';
 
-import { Controller } from './controller';
-
-export class Touch extends Controller {
+export class TouchController {
   #touches;
 
   constructor() {
-    super();
-
     this.#touches = {};
   }
 
@@ -88,4 +84,4 @@ export class Touch extends Controller {
   }
 }
 
-export default Touch;
+export default TouchController;

@@ -1,80 +1,147 @@
-import { EventEmitter } from 'fbemitter';
+import { pipe } from 'ramda';
 
-import { createCanvas, setupCanvas } from './canvas';
-import { checkWebGLSupport, createRenderingContext } from './webgl';
-import { rendererEvent } from './renderer_event';
-import { createError } from './error';
-import { RenderTimer } from './render_timer';
+import { ProgramObject } from '../object';
+import { spriteShaderProgram } from './sprite_shader_program';
+import { rendererEvent } from '.';
 
-const defaultConfiguration = {
-  fpsThreshold: 60
+const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
+  renderer.useProgram(program.name);
+
+  // Update current shader program attributes and uniforms.
+  const { attributes, uniforms } = program.onUpdate({ target, scene, camera });
+  attributes.forEach(({ name, value }) => renderer.setAttributeValue(name, value));
+  uniforms.forEach(({ name, value }) => renderer.setUniformValue(name, value));
+
+  // Bind current shader program attributes and uniforms.
+  renderer.bindProgramAttributes();
+  renderer.bindProgramUniforms();
+
+  // Bind target's textures.
+  [target.colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
+
+  renderer.draw(Math.floor(target.vertices.length / 2));
 };
 
-export class WebGLRenderer {
-  canvas;
+const getTargetPrograms = ({ programs: p = [] }) => (p.length && p) || [spriteShaderProgram];
 
-  #eventEmitter;
+const getTargetUpdater = props => target => {
+  getTargetPrograms(target).forEach(program => drawTargetByProgram({ ...props, target, program }));
+};
 
-  #timer;
+const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
+  shaderPrograms.forEach(program => renderer.registerProgram(program));
+};
 
-  constructor(configuration = {}) {
-    const { canvas } = Object.assign({}, defaultConfiguration, configuration);
+const prepareRenderer = ({ renderer }) => {
+  registerPrebuiltPrograms({ renderer, shaderPrograms: [spriteShaderProgram] });
 
-    this.canvas = setupCanvas(canvas || createCanvas(), configuration);
-    this.#eventEmitter = new EventEmitter();
-    this.#timer = new RenderTimer(configuration.fpsThreshold);
+  renderer.setTransparentBlending();
+  renderer.loadAllPrograms();
+  renderer.loadAllTextures();
+};
+
+const createNextFrameRenderer = ({ prevTs = 0, accumulator = 0, ...restProps }) => ts => {
+  // Difference between 2 frames' timestamps.
+  const dt = ts - prevTs;
+
+  // Next delta time is equal to delta time between 2 frames and accumulated time of skept frames.
+  const nextDt = dt + accumulator;
+
+  // Next accumulator will be accumulated by current frame time.
+  const nextAccumulator = accumulator + dt;
+
+  // eslint-disable-next-line no-use-before-define
+  render({ ...restProps, dt: nextDt, prevTs: ts, accumulator: nextAccumulator });
+};
+
+const requestNextFrame = pipe(
+  createNextFrameRenderer,
+  nextRender => window.requestAnimationFrame(nextRender)
+);
+
+const render = props => {
+  const { scene, camera, renderer, isStopRequested, accumulator = 0, dt = 0 } = props;
+  const msThreshold = 1000 / renderer.fpsThreshold;
+
+  // Stop requested, close rendering loop.
+  if (isStopRequested()) {
+    renderer.emit(rendererEvent.STOP);
+    return;
   }
 
-  start() {
-    const gl = createRenderingContext(this.canvas);
-
-    if (!checkWebGLSupport(gl)) {
-      this.#eventEmitter.emit(
-        rendererEvent.WEBGL_IS_NOT_SUPPORTED,
-        createError('WebGL is not supported')
-      );
-      return;
-    }
-
-    this._prepare(gl);
-
-    this._render(gl);
+  if (accumulator < msThreshold) {
+    // Skip frame.
+    requestNextFrame(props);
+    return;
   }
 
-  on(event, handler) {
-    this.#eventEmitter.addListener(event, handler);
-  }
+  // Render frame.
+  renderer.emit(rendererEvent.UPDATE, { dt });
+  scene.children.forEach(getTargetUpdater({ renderer, scene, camera }));
 
-  _prepare(gl) {
-    gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+  // Request next frame and reset skip frame accumulator.
+  requestNextFrame({ ...props, accumulator: 0 });
+};
 
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+// const renderer = new WebGLRenderer(canvas);
+// const scene = new Scene();
+// const camera = new Camera({ width: 800, height: 600 })
+//
+// const programs = [{
+//  name: 'my-own-program',
+//  vSource: 'vertex data source',
+//  fSource: 'fragment data source'
+//  attributes: [{ name: 'a_pos', type: FLOAT_ARRAY_2 }],
+//  uniforms: [{ name: 'u_m', type: MAT_3}],
+//  onUpdate: ({ target, scene, camera }) => ({
+//    attributes: [{ name: 'a_pos', value: target.vertices}],
+//    uniforms: [{ name: 'u_m', value: target.mMatrix }]
+//  })
+// }]
+//
+// const image = new Image(); // Imagine that is already loaded.
+//
+// const textures = [{
+//   name: 'my-texture',
+//   type: COLOR_MAP,
+//   image
+// }]
+//
+// registerPrograms({ renderer, programs })
+// registerTextures({ renderer, textures })
+//
+// const sprite = new Sprite({ colorMapTexture: texture[0]})
+//
+// const spriteMultiProgram = withPrograms(programs)(sprite)
+//
+// scene.add(spriteMultiProgram);
+//
+// start({ renderer, scene, camera })
+//
 
-    // Set first checkpoint.
-    this.#timer.init();
-  }
+export const start = props => {
+  let stopSignal = false;
 
-  _render(...args) {
-    const [gl] = args;
+  const stop = () => {
+    stopSignal = true;
+  };
 
-    this.#timer.checkpoint();
+  const isStopRequested = () => stopSignal;
 
-    if (this.#timer.isReachedThreshold()) {
-      this.#timer.reduce();
+  props.renderer.emit(rendererEvent.START);
 
-      this.#eventEmitter.emit(rendererEvent.UPDATE, this.#timer.delta);
+  prepareRenderer(props);
+  render({ ...props, isStopRequested });
 
-      this._renderFrame(gl);
-    }
+  return stop;
+};
 
-    window.requestAnimationFrame(this._render.bind(this, ...args));
-  }
+export const registerPrograms = ({ renderer, programs }) => {
+  programs.forEach(program => renderer.registerProgram(program));
+};
 
-  _renderFrame(gl) {
-    gl.clearColor(Math.random(), Math.random(), Math.random(), 0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-  }
-}
+export const registerTextures = ({ renderer, textures }) => {
+  textures.forEach(texture => renderer.registerTexture(texture));
+};
 
-export default WebGLRenderer;
+export const withPrograms = programs => target => new ProgramObject(target, programs);

@@ -14,6 +14,12 @@ module.exports = {
         use: {
           loader: 'babel-loader'
         }
+      },
+      {
+        test: /\.png$/,
+        use: {
+          loader: 'url-loader'
+        }
       }
     ]
   },
@@ -29,5 +35,6 @@ module.exports = {
     filename: 'example.js'
   },
   plugins: [new HtmlWebpackPlugin()],
-  mode: 'development'
+  mode: 'development',
+  devtool: 'inline-cheap-source-map'
 };
