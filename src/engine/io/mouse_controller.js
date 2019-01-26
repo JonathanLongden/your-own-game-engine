@@ -1,6 +1,9 @@
 import { autobind } from 'core-decorators';
+import { EventEmitter } from 'fbemitter';
 
-export class MouseController {
+import { MOUSE_DOWN, MOUSE_UP, MOUSE_MOVE, MOUSE_WHEEL } from './io_events';
+
+export class MouseController extends EventEmitter {
   #pressedKeys;
 
   #x;
@@ -16,6 +19,8 @@ export class MouseController {
   #movementWheel;
 
   constructor() {
+    super();
+
     this.#pressedKeys = {};
     this.#wheel = 0;
     this.#movementX = 0;
@@ -26,10 +31,10 @@ export class MouseController {
   bind() {
     this.unbind();
 
-    window.addEventListener('mousedown', this._handleMouseDown);
-    window.addEventListener('mouseup', this._handleMouseUp);
-    window.addEventListener('mousemove', this._handleMouseMove);
-    window.addEventListener('wheel', this._handleMouseWheel);
+    window.addEventListener('mousedown', this._handleMouseDown, { passive: false });
+    window.addEventListener('mouseup', this._handleMouseUp, { passive: false });
+    window.addEventListener('mousemove', this._handleMouseMove, { passive: false });
+    window.addEventListener('wheel', this._handleMouseWheel, { passive: false });
   }
 
   unbind() {
@@ -67,6 +72,8 @@ export class MouseController {
       screenY: y
     } = e;
 
+    e.preventDefault();
+
     this.#x = x;
     this.#y = y;
     this.#movementX = 0;
@@ -78,11 +85,15 @@ export class MouseController {
       meta,
       alt
     };
+
+    this.emit(MOUSE_DOWN, { shift, ctrl, meta, alt, button, x, y });
   }
 
   @autobind
   _handleMouseUp(e) {
-    const { button } = e;
+    const { shiftKey: shift, altKey: alt, metaKey: meta, ctrlKey: ctrl, button } = e;
+
+    e.preventDefault();
 
     this.#x = undefined;
     this.#y = undefined;
@@ -90,22 +101,34 @@ export class MouseController {
     this.#movementY = 0;
 
     delete this.#pressedKeys[button];
+
+    this.emit(MOUSE_UP, { shift, ctrl, meta, alt, button });
   }
 
   @autobind
   _handleMouseMove(e) {
-    const { movementX, movementY } = e;
+    const { movementX, movementY, screenX: x, screenY: y } = e;
+
+    e.preventDefault();
 
     this.#movementX = movementX;
     this.#movementY = movementY;
+    this.#x = x;
+    this.#y = y;
+
+    this.emit(MOUSE_MOVE, { x, y, movementX, movementY });
   }
 
   @autobind
   _handleMouseWheel(e) {
     const { deltaY } = e;
 
+    e.preventDefault();
+
     this.#movementWheel = this.#wheel - deltaY;
     this.#wheel = deltaY;
+
+    this.emit(MOUSE_WHEEL, { wheel: this.#wheel, movement: this.#movementWheel });
   }
 
   get x() {

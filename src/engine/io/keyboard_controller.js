@@ -1,17 +1,22 @@
+import { EventEmitter } from 'fbemitter';
 import { autobind } from 'core-decorators';
 
-export class KeyboardController {
+import { KEY_DOWN, KEY_UP } from './io_events';
+
+export class KeyboardController extends EventEmitter {
   #pressedKeys;
 
   constructor() {
+    super();
+
     this.#pressedKeys = {};
   }
 
   bind() {
     this.unbind();
 
-    window.addEventListener('keydown', this._handleKeyDown, false);
-    window.addEventListener('keyup', this._handleKeyUp, false);
+    window.addEventListener('keydown', this._handleKeyDown, { passive: false });
+    window.addEventListener('keyup', this._handleKeyUp, { passive: false });
   }
 
   unbind() {
@@ -39,19 +44,33 @@ export class KeyboardController {
       keyCode: code
     } = e;
 
+    e.preventDefault();
+
     this.#pressedKeys[code] = {
       shift,
       ctrl,
       meta,
       alt
     };
+
+    this.emit(KEY_DOWN, { shift, ctrl, meta, alt, code });
   }
 
   @autobind
   _handleKeyUp(e) {
-    const { keyCode: code } = e;
+    const {
+      shiftKey: shift = false,
+      altKey: alt = false,
+      metaKey: meta = false,
+      ctrlKey: ctrl = false,
+      keyCode: code
+    } = e;
+
+    e.preventDefault();
 
     delete this.#pressedKeys[code];
+
+    this.emit(KEY_UP, { shift, ctrl, meta, alt, code });
   }
 }
 

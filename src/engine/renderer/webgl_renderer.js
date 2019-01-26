@@ -149,42 +149,72 @@ export class WebGLRenderer extends EventEmitter {
     this.useProgram(null);
   }
 
-  registerTexture({ name, image, type }) {
+  registerTexture({ name, image, type, textureAtlas }) {
+    if (textureAtlas) {
+      const { name, image, type } = textureAtlas;
+
+      this.#textures[name] = {
+        image,
+        type
+      };
+    }
+
     this.#textures[name] = {
       image,
-      type
+      type,
+      textureAtlas
     };
   }
 
-  loadTexture(textureName) {
-    const { image } = this.#textures[textureName];
-    const glTexture = this.#gl.createTexture();
+  loadTexture(name) {
+    const {
+      image,
+      textureAtlas: { image: textureAtlasImage, name: textureAtlasName } = {}
+    } = this.#textures[name];
 
-    this.#textures[textureName].glTexture = glTexture;
+    const isTextureAtlas = textureAtlasImage && textureAtlasName;
 
-    this.useTexture(textureName);
+    let textureName = name;
+    let textureImage = image;
 
-    this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
-    this.#gl.texImage2D(
-      this.#gl.TEXTURE_2D,
-      0,
-      this.#gl.RGBA,
-      this.#gl.RGBA,
-      this.#gl.UNSIGNED_BYTE,
-      image
-    );
-    this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_S, this.#gl.CLAMP_TO_EDGE);
-    this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_T, this.#gl.CLAMP_TO_EDGE);
-    this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_MAG_FILTER, this.#gl.LINEAR);
-    this.#gl.texParameteri(
-      this.#gl.TEXTURE_2D,
-      this.#gl.TEXTURE_MIN_FILTER,
-      this.#gl.LINEAR_MIPMAP_NEAREST
-    );
+    // Texture atlas should be loaded instead if exists.
+    if (isTextureAtlas) {
+      textureName = textureAtlasName;
+      textureImage = textureAtlasImage;
+    }
 
-    this.#gl.generateMipmap(this.#gl.TEXTURE_2D);
+    const isTextureLoaded = !!this.#textures[textureName].glTexture;
 
-    this.useTexture(null);
+    // Load texture if it was not loaded before.
+    if (!isTextureLoaded) {
+      const glTexture = this.#gl.createTexture();
+
+      this.#textures[textureName].glTexture = glTexture;
+
+      this.useTexture(textureName);
+
+      this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
+      this.#gl.texImage2D(
+        this.#gl.TEXTURE_2D,
+        0,
+        this.#gl.RGBA,
+        this.#gl.RGBA,
+        this.#gl.UNSIGNED_BYTE,
+        textureImage
+      );
+      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_S, this.#gl.CLAMP_TO_EDGE);
+      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_T, this.#gl.CLAMP_TO_EDGE);
+      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_MAG_FILTER, this.#gl.LINEAR);
+      this.#gl.texParameteri(
+        this.#gl.TEXTURE_2D,
+        this.#gl.TEXTURE_MIN_FILTER,
+        this.#gl.LINEAR_MIPMAP_NEAREST
+      );
+
+      this.#gl.generateMipmap(this.#gl.TEXTURE_2D);
+
+      this.useTexture(null);
+    }
   }
 
   loadAllTextures() {

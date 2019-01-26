@@ -2,7 +2,7 @@ import { pipe } from 'ramda';
 
 import { ProgramObject } from '../object';
 import { spriteShaderProgram } from './sprite_shader_program';
-import { rendererEvent } from '.';
+import { START, UPDATE, STOP } from './renderer_event';
 
 const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.useProgram(program.name);
@@ -17,7 +17,9 @@ const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.bindProgramUniforms();
 
   // Bind target's textures.
-  [target.colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
+  [target.colorMapTexture].forEach(
+    t => t && renderer.useTexture((t.textureAtlas && t.textureAtlas.name) || t.name)
+  );
 
   renderer.draw(Math.floor(target.vertices.length / 2));
 };
@@ -65,7 +67,7 @@ const render = props => {
 
   // Stop requested, close rendering loop.
   if (isStopRequested()) {
-    renderer.emit(rendererEvent.STOP);
+    renderer.emit(STOP);
     return;
   }
 
@@ -76,7 +78,7 @@ const render = props => {
   }
 
   // Render frame.
-  renderer.emit(rendererEvent.UPDATE, { dt });
+  renderer.emit(UPDATE, { dt });
   scene.children.forEach(getTargetUpdater({ renderer, scene, camera }));
 
   // Request next frame and reset skip frame accumulator.
@@ -128,7 +130,7 @@ export const start = props => {
 
   const isStopRequested = () => stopSignal;
 
-  props.renderer.emit(rendererEvent.START);
+  props.renderer.emit(START);
 
   prepareRenderer(props);
   render({ ...props, isStopRequested });

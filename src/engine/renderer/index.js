@@ -1,12 +1,12 @@
 import { COLOR_MAP } from './texture_map';
 import { WebGLRenderer } from './webgl_renderer';
 import { start, registerPrograms, registerTextures, withPrograms } from './renderer';
-import { rendererEvent } from './renderer_event';
+import * as events from './renderer_event';
 
 export {
   COLOR_MAP,
   WebGLRenderer,
-  rendererEvent,
+  events,
   start,
   registerPrograms,
   registerTextures,
@@ -16,7 +16,7 @@ export {
 export default {
   COLOR_MAP,
   WebGLRenderer,
-  rendererEvent,
+  events,
   start,
   registerPrograms,
   registerTextures,
