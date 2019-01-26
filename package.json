@@ -6,6 +6,7 @@
   "engines": {
     "node": ">=9.7.1"
   },
+  "main": "index.js",
   "scripts": {
     "build": "./node_modules/.bin/babel src/engine/index.js -d .dist/engine --env-name production",
     "serve": "./node_modules/.bin/webpack-dev-server -d",
