@@ -10,7 +10,7 @@
   "scripts": {
     "build": "./node_modules/.bin/babel src/engine/index.js -d .dist/engine --env-name production",
     "serve": "./node_modules/.bin/webpack-dev-server -d",
-    "lint": "./node_modules/.bin/eslint --fix --ext .js src/*"
+    "lint": "./node_modules/.bin/eslint --ext .js src/*"
   },
   "pre-commit": [
     "lint"
