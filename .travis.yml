@@ -10,4 +10,4 @@ before_install: # if "install" is overridden
 cache:
   yarn: true
 scripts:
-  - npm run lint
+  - 'yarn lint'
