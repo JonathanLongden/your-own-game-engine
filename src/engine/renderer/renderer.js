@@ -17,9 +17,7 @@ const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.bindProgramUniforms();
 
   // Bind target's textures.
-  [target.colorMapTexture].forEach(
-    t => t && renderer.useTexture((t.textureAtlas && t.textureAtlas.name) || t.name)
-  );
+  [target.colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
 
   renderer.draw(Math.floor(target.vertices.length / 2));
 };
@@ -84,42 +82,6 @@ const render = props => {
   // Request next frame and reset skip frame accumulator.
   requestNextFrame({ ...props, accumulator: 0 });
 };
-
-// const renderer = new WebGLRenderer(canvas);
-// const scene = new Scene();
-// const camera = new Camera({ width: 800, height: 600 })
-//
-// const programs = [{
-//  name: 'my-own-program',
-//  vSource: 'vertex data source',
-//  fSource: 'fragment data source'
-//  attributes: [{ name: 'a_pos', type: FLOAT_ARRAY_2 }],
-//  uniforms: [{ name: 'u_m', type: MAT_3}],
-//  onUpdate: ({ target, scene, camera }) => ({
-//    attributes: [{ name: 'a_pos', value: target.vertices}],
-//    uniforms: [{ name: 'u_m', value: target.mMatrix }]
-//  })
-// }]
-//
-// const image = new Image(); // Imagine that is already loaded.
-//
-// const textures = [{
-//   name: 'my-texture',
-//   type: COLOR_MAP,
-//   image
-// }]
-//
-// registerPrograms({ renderer, programs })
-// registerTextures({ renderer, textures })
-//
-// const sprite = new Sprite({ colorMapTexture: texture[0]})
-//
-// const spriteMultiProgram = withPrograms(programs)(sprite)
-//
-// scene.add(spriteMultiProgram);
-//
-// start({ renderer, scene, camera })
-//
 
 export const start = props => {
   let stopSignal = false;

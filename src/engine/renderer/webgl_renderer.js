@@ -150,48 +150,37 @@ export class WebGLRenderer extends EventEmitter {
   }
 
   registerTexture({ name, image, type, textureAtlas }) {
-    if (textureAtlas) {
-      const { name, image, type } = textureAtlas;
+    const textureName = (textureAtlas && textureAtlas.name) || name;
 
-      this.#textures[name] = {
-        image,
-        type
-      };
+    // In a case if this is sub-texture or texture atlas,
+    // then texture atlas should be registered first,
+    // but only once.
+    if (textureAtlas && !this.#isTextureRegistered(textureName)) {
+      this.registerTexture(textureAtlas);
     }
 
+    // Register texture, but in a case if this is a sub-texture,
+    // then we need to set `textureAtlas` property as well,
+    // but should be careful that we are propagating link
+    // to already registered texture (texture atlas).
     this.#textures[name] = {
       image,
       type,
-      textureAtlas
+      textureAtlas: textureAtlas && this.#getTexture(textureName),
+      name
     };
   }
 
-  loadTexture(name) {
-    const {
-      image,
-      textureAtlas: { image: textureAtlasImage, name: textureAtlasName } = {}
-    } = this.#textures[name];
-
-    const isTextureAtlas = textureAtlasImage && textureAtlasName;
-
-    let textureName = name;
-    let textureImage = image;
-
-    // Texture atlas should be loaded instead if exists.
-    if (isTextureAtlas) {
-      textureName = textureAtlasName;
-      textureImage = textureAtlasImage;
-    }
-
-    const isTextureLoaded = !!this.#textures[textureName].glTexture;
+  loadTexture(textureName) {
+    const { image, name } = this.#getBaseTexture(textureName);
 
     // Load texture if it was not loaded before.
-    if (!isTextureLoaded) {
+    if (!this.#isBaseTextureLoaded(name)) {
       const glTexture = this.#gl.createTexture();
 
-      this.#textures[textureName].glTexture = glTexture;
+      this.#textures[name].glTexture = glTexture;
 
-      this.useTexture(textureName);
+      this.useTexture(name);
 
       this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
       this.#gl.texImage2D(
@@ -200,7 +189,7 @@ export class WebGLRenderer extends EventEmitter {
         this.#gl.RGBA,
         this.#gl.RGBA,
         this.#gl.UNSIGNED_BYTE,
-        textureImage
+        image
       );
       this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_S, this.#gl.CLAMP_TO_EDGE);
       this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_T, this.#gl.CLAMP_TO_EDGE);
@@ -344,7 +333,7 @@ export class WebGLRenderer extends EventEmitter {
     if (textureName) {
       if (this.#boundTextureName === textureName) return;
 
-      const { glTexture, type } = this.#textures[textureName];
+      const { glTexture, type, name } = this.#getBaseTexture(textureName);
 
       const textureTypeIds = {
         [COLOR_MAP]: this.#gl.TEXTURE0
@@ -352,9 +341,41 @@ export class WebGLRenderer extends EventEmitter {
 
       this.#gl.activeTexture(textureTypeIds[type]);
       this.#gl.bindTexture(this.#gl.TEXTURE_2D, glTexture);
+
+      this.#boundTextureName = name;
     } else {
       this.#gl.bindTexture(this.#gl.TEXTURE_2D, null);
+
+      this.#boundTextureName = null;
     }
+  }
+
+  /**
+   * Get base texture from registered textures.
+   *
+   * Base texture is original texture with attached image.
+   * Main difference between texture and base texture, that
+   * first one could be sub-texture of texture atlas, so
+   * for example if we need to load the original texture with image,
+   * then we need to get reference of texture atlas, which actually
+   * our base texture.
+   */
+  #getBaseTexture(name) {
+    const t = this.#textures[name];
+    return (t && t.textureAtlas) || t;
+  }
+
+  #getTexture(name) {
+    return this.#textures[name];
+  }
+
+  #isBaseTextureLoaded(name) {
+    const t = this.#getBaseTexture(name);
+    return !!(t && t.glTexture);
+  }
+
+  #isTextureRegistered(name) {
+    return !!this.#getTexture(name);
   }
 
   get fpsThreshold() {
