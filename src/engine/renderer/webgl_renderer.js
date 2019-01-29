@@ -155,7 +155,7 @@ export class WebGLRenderer extends EventEmitter {
     // In a case if this is sub-texture or texture atlas,
     // then texture atlas should be registered first,
     // but only once.
-    if (textureAtlas && !this.#isTextureRegistered(textureName)) {
+    if (textureAtlas && !this._isTextureRegistered(textureName)) {
       this.registerTexture(textureAtlas);
     }
 
@@ -166,16 +166,16 @@ export class WebGLRenderer extends EventEmitter {
     this.#textures[name] = {
       image,
       type,
-      textureAtlas: textureAtlas && this.#getTexture(textureName),
+      textureAtlas: textureAtlas && this._getTexture(textureName),
       name
     };
   }
 
   loadTexture(textureName) {
-    const { image, name } = this.#getBaseTexture(textureName);
+    const { image, name } = this._getBaseTexture(textureName);
 
     // Load texture if it was not loaded before.
-    if (!this.#isBaseTextureLoaded(name)) {
+    if (!this._isBaseTextureLoaded(name)) {
       const glTexture = this.#gl.createTexture();
 
       this.#textures[name].glTexture = glTexture;
@@ -333,7 +333,7 @@ export class WebGLRenderer extends EventEmitter {
     if (textureName) {
       if (this.#boundTextureName === textureName) return;
 
-      const { glTexture, type, name } = this.#getBaseTexture(textureName);
+      const { glTexture, type, name } = this._getBaseTexture(textureName);
 
       const textureTypeIds = {
         [COLOR_MAP]: this.#gl.TEXTURE0
@@ -360,22 +360,22 @@ export class WebGLRenderer extends EventEmitter {
    * then we need to get reference of texture atlas, which actually
    * our base texture.
    */
-  #getBaseTexture(name) {
+  _getBaseTexture(name) {
     const t = this.#textures[name];
     return (t && t.textureAtlas) || t;
   }
 
-  #getTexture(name) {
+  _getTexture(name) {
     return this.#textures[name];
   }
 
-  #isBaseTextureLoaded(name) {
-    const t = this.#getBaseTexture(name);
+  _isBaseTextureLoaded(name) {
+    const t = this._getBaseTexture(name);
     return !!(t && t.glTexture);
   }
 
-  #isTextureRegistered(name) {
-    return !!this.#getTexture(name);
+  _isTextureRegistered(name) {
+    return !!this._getTexture(name);
   }
 
   get fpsThreshold() {
