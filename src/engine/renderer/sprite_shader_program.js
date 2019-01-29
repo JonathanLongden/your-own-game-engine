@@ -1,5 +1,18 @@
 import { FLOAT_ARRAY_2, MAT_3, INT_1 } from './webgl_types';
 
+const defaultTexelsCoords = [0, 0, 0, 1, 1, 0, 1, 1];
+
+// Transform diagonal coordinates to texels coordinate system (4 vertices).
+const transformDiagonalCoords = diagonalCoords => {
+  const [x, y, x1, y1] = diagonalCoords;
+  return [x, y, x, y1, x1, y, x1, y1];
+};
+
+const getTextureTexels = t => {
+  const coords = (t.crop && transformDiagonalCoords(t.crop)) || defaultTexelsCoords;
+  return Float32Array.from(coords);
+};
+
 export const spriteShaderProgram = {
   name: '_sprite_shader_program',
   vSource: `
@@ -54,7 +67,10 @@ export const spriteShaderProgram = {
   onUpdate: ({ target, camera }) => ({
     attributes: [
       { name: 'a_pos', value: target.vertices },
-      { name: 'a_tex', value: target.texels }
+      {
+        name: 'a_tex',
+        value: getTextureTexels(target.colorMapTexture)
+      }
     ],
     uniforms: [
       { name: 'u_m', value: target.modelMatrix },

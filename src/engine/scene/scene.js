@@ -5,8 +5,8 @@ export class Scene {
     this.#children = [];
   }
 
-  add(child) {
-    this.#children.push(child);
+  add(...children) {
+    children.forEach(child => this.#children.push(child));
   }
 
   remove(child) {

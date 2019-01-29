@@ -149,42 +149,61 @@ export class WebGLRenderer extends EventEmitter {
     this.useProgram(null);
   }
 
-  registerTexture({ name, image, type }) {
+  registerTexture({ name, image, type, textureAtlas }) {
+    const textureName = (textureAtlas && textureAtlas.name) || name;
+
+    // In a case if this is sub-texture or texture atlas,
+    // then texture atlas should be registered first,
+    // but only once.
+    if (textureAtlas && !this._isTextureRegistered(textureName)) {
+      this.registerTexture(textureAtlas);
+    }
+
+    // Register texture, but in a case if this is a sub-texture,
+    // then we need to set `textureAtlas` property as well,
+    // but should be careful that we are propagating link
+    // to already registered texture (texture atlas).
     this.#textures[name] = {
       image,
-      type
+      type,
+      textureAtlas: textureAtlas && this._getTexture(textureName),
+      name
     };
   }
 
   loadTexture(textureName) {
-    const { image } = this.#textures[textureName];
-    const glTexture = this.#gl.createTexture();
+    const { image, name } = this._getBaseTexture(textureName);
 
-    this.#textures[textureName].glTexture = glTexture;
+    // Load texture if it was not loaded before.
+    if (!this._isBaseTextureLoaded(name)) {
+      const glTexture = this.#gl.createTexture();
 
-    this.useTexture(textureName);
+      this.#textures[name].glTexture = glTexture;
 
-    this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
-    this.#gl.texImage2D(
-      this.#gl.TEXTURE_2D,
-      0,
-      this.#gl.RGBA,
-      this.#gl.RGBA,
-      this.#gl.UNSIGNED_BYTE,
-      image
-    );
-    this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_S, this.#gl.CLAMP_TO_EDGE);
-    this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_T, this.#gl.CLAMP_TO_EDGE);
-    this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_MAG_FILTER, this.#gl.LINEAR);
-    this.#gl.texParameteri(
-      this.#gl.TEXTURE_2D,
-      this.#gl.TEXTURE_MIN_FILTER,
-      this.#gl.LINEAR_MIPMAP_NEAREST
-    );
+      this.useTexture(name);
 
-    this.#gl.generateMipmap(this.#gl.TEXTURE_2D);
+      this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
+      this.#gl.texImage2D(
+        this.#gl.TEXTURE_2D,
+        0,
+        this.#gl.RGBA,
+        this.#gl.RGBA,
+        this.#gl.UNSIGNED_BYTE,
+        image
+      );
+      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_S, this.#gl.CLAMP_TO_EDGE);
+      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_T, this.#gl.CLAMP_TO_EDGE);
+      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_MAG_FILTER, this.#gl.LINEAR);
+      this.#gl.texParameteri(
+        this.#gl.TEXTURE_2D,
+        this.#gl.TEXTURE_MIN_FILTER,
+        this.#gl.LINEAR_MIPMAP_NEAREST
+      );
 
-    this.useTexture(null);
+      this.#gl.generateMipmap(this.#gl.TEXTURE_2D);
+
+      this.useTexture(null);
+    }
   }
 
   loadAllTextures() {
@@ -314,7 +333,7 @@ export class WebGLRenderer extends EventEmitter {
     if (textureName) {
       if (this.#boundTextureName === textureName) return;
 
-      const { glTexture, type } = this.#textures[textureName];
+      const { glTexture, type, name } = this._getBaseTexture(textureName);
 
       const textureTypeIds = {
         [COLOR_MAP]: this.#gl.TEXTURE0
@@ -322,9 +341,41 @@ export class WebGLRenderer extends EventEmitter {
 
       this.#gl.activeTexture(textureTypeIds[type]);
       this.#gl.bindTexture(this.#gl.TEXTURE_2D, glTexture);
+
+      this.#boundTextureName = name;
     } else {
       this.#gl.bindTexture(this.#gl.TEXTURE_2D, null);
+
+      this.#boundTextureName = null;
     }
+  }
+
+  /**
+   * Get base texture from registered textures.
+   *
+   * Base texture is original texture with attached image.
+   * Main difference between texture and base texture, that
+   * first one could be sub-texture of texture atlas, so
+   * for example if we need to load the original texture with image,
+   * then we need to get reference of texture atlas, which actually
+   * our base texture.
+   */
+  _getBaseTexture(name) {
+    const t = this.#textures[name];
+    return (t && t.textureAtlas) || t;
+  }
+
+  _getTexture(name) {
+    return this.#textures[name];
+  }
+
+  _isBaseTextureLoaded(name) {
+    const t = this._getBaseTexture(name);
+    return !!(t && t.glTexture);
+  }
+
+  _isTextureRegistered(name) {
+    return !!this._getTexture(name);
   }
 
   get fpsThreshold() {

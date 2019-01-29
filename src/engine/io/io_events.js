@@ -1,0 +1,9 @@
+export const KEY_DOWN = 'keydown';
+export const KEY_UP = 'keyup';
+export const MOUSE_DOWN = 'mousedown';
+export const MOUSE_UP = 'mouseup';
+export const MOUSE_MOVE = 'mousemove';
+export const MOUSE_WHEEL = 'mousewheel';
+export const TOUCH_START = 'touchstart';
+export const TOUCH_END = 'touchend';
+export const TOUCH_MOVE = 'touchmove';

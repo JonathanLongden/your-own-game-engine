@@ -9,5 +9,5 @@ before_install: # if "install" is overridden
   - sudo apt-get install -y -qq yarn
 cache:
   yarn: true
-scripts:
-  - npm run lint
+script:
+  - yarn lint

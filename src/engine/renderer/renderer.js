@@ -2,7 +2,7 @@ import { pipe } from 'ramda';
 
 import { ProgramObject } from '../object';
 import { spriteShaderProgram } from './sprite_shader_program';
-import { rendererEvent } from '.';
+import { START, UPDATE, STOP } from './renderer_event';
 
 const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.useProgram(program.name);
@@ -65,7 +65,7 @@ const render = props => {
 
   // Stop requested, close rendering loop.
   if (isStopRequested()) {
-    renderer.emit(rendererEvent.STOP);
+    renderer.emit(STOP);
     return;
   }
 
@@ -76,48 +76,12 @@ const render = props => {
   }
 
   // Render frame.
-  renderer.emit(rendererEvent.UPDATE, { dt });
+  renderer.emit(UPDATE, { dt });
   scene.children.forEach(getTargetUpdater({ renderer, scene, camera }));
 
   // Request next frame and reset skip frame accumulator.
   requestNextFrame({ ...props, accumulator: 0 });
 };
-
-// const renderer = new WebGLRenderer(canvas);
-// const scene = new Scene();
-// const camera = new Camera({ width: 800, height: 600 })
-//
-// const programs = [{
-//  name: 'my-own-program',
-//  vSource: 'vertex data source',
-//  fSource: 'fragment data source'
-//  attributes: [{ name: 'a_pos', type: FLOAT_ARRAY_2 }],
-//  uniforms: [{ name: 'u_m', type: MAT_3}],
-//  onUpdate: ({ target, scene, camera }) => ({
-//    attributes: [{ name: 'a_pos', value: target.vertices}],
-//    uniforms: [{ name: 'u_m', value: target.mMatrix }]
-//  })
-// }]
-//
-// const image = new Image(); // Imagine that is already loaded.
-//
-// const textures = [{
-//   name: 'my-texture',
-//   type: COLOR_MAP,
-//   image
-// }]
-//
-// registerPrograms({ renderer, programs })
-// registerTextures({ renderer, textures })
-//
-// const sprite = new Sprite({ colorMapTexture: texture[0]})
-//
-// const spriteMultiProgram = withPrograms(programs)(sprite)
-//
-// scene.add(spriteMultiProgram);
-//
-// start({ renderer, scene, camera })
-//
 
 export const start = props => {
   let stopSignal = false;
@@ -128,7 +92,7 @@ export const start = props => {
 
   const isStopRequested = () => stopSignal;
 
-  props.renderer.emit(rendererEvent.START);
+  props.renderer.emit(START);
 
   prepareRenderer(props);
   render({ ...props, isStopRequested });
