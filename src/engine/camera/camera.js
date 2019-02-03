@@ -21,10 +21,10 @@ export class Camera {
     this.#vMatrix = mat3.create();
     this.#vpMatrix = mat3.create();
 
-    this.recalculate();
+    this.updateViewProjectionMatrix();
   }
 
-  recalculate() {
+  updateViewProjectionMatrix() {
     // P = PT x PS (pre-calculated).
 
     // V = T x R x S

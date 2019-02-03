@@ -3,7 +3,13 @@ import { mat3 } from 'gl-matrix';
 export const transform = (...transformations) => (...objects) => {
   objects.forEach(obj => {
     transformations.forEach(t => t(obj));
-    obj.recalculate();
+
+    const { updateModelMatrix, updateViewProjectionMatrix } = obj;
+
+    // Force update model & projection matrices.
+    [updateModelMatrix, updateViewProjectionMatrix].forEach(updater => {
+      if (updater) updater();
+    });
   });
 };
 

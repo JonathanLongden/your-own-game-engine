@@ -4,11 +4,11 @@ import { ProgramObject } from '../object';
 import { spriteShaderProgram } from './sprite_shader_program';
 import { START, UPDATE, STOP } from './renderer_event';
 
-const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
+const drawTargetByProgram = ({ renderer, target, context, camera, program }) => {
   renderer.useProgram(program.name);
 
   // Update current shader program attributes and uniforms.
-  const { attributes, uniforms } = program.onUpdate({ target, scene, camera });
+  const { attributes, uniforms } = program.onUpdate({ target, context, camera });
   attributes.forEach(({ name, value }) => renderer.setAttributeValue(name, value));
   uniforms.forEach(({ name, value }) => renderer.setUniformValue(name, value));
 
@@ -16,8 +16,29 @@ const drawTargetByProgram = ({ renderer, target, scene, camera, program }) => {
   renderer.bindProgramAttributes();
   renderer.bindProgramUniforms();
 
-  // Bind target's textures.
-  [target.colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
+  const { colorMapTexture, children } = target;
+
+  if (children) {
+    // Target is container.
+
+    // In a case if target is SpriteContainer, it's needed somehow
+    // to prepare framebuffer and draw into and after drawing we need to bind to actual canvas.
+
+    // tbd: All containers have internal framebuffers?
+    // tbd: Where to define framebuffer?
+    // tbd: How to manage framebuffer?
+    // tbd: Do we need pre-load and pre-initialize buffer or on first rendering?
+
+    // WARNING: THIS CODE IS NOT WORKED.
+    // eslint-disable-next-line no-use-before-define
+    children.forEach(getTargetUpdater({ renderer, context: target, camera }));
+    // WARNING: THIS CODE IS NOT WORKED.
+  } else {
+    // Target is single.
+
+    // Bind target's textures.
+    [colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
+  }
 
   renderer.draw(Math.floor(target.vertices.length / 2));
 };
@@ -77,7 +98,7 @@ const render = props => {
 
   // Render frame.
   renderer.emit(UPDATE, { dt });
-  scene.children.forEach(getTargetUpdater({ renderer, scene, camera }));
+  scene.children.forEach(getTargetUpdater({ renderer, context: scene, camera }));
 
   // Request next frame and reset skip frame accumulator.
   requestNextFrame({ ...props, accumulator: 0 });

@@ -18,10 +18,10 @@ export class Object2D {
     this.#sMatrix = mat3.fromScaling(mat3.create(), scale || [1, 1]);
     this.#mMatrix = mat3.create();
 
-    this.recalculate();
+    this.updateModelMatrix();
   }
 
-  recalculate() {
+  updateModelMatrix() {
     // M = T x R x S.
     mat3.mul(this.#mMatrix, this.#tMatrix, this.#rMatrix);
     mat3.mul(this.#mMatrix, this.#mMatrix, this.#sMatrix);
