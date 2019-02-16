@@ -11,29 +11,25 @@ export class Camera {
 
   #vMatrix;
 
-  #vpMatrix;
-
   constructor({ width, height, rotation, translation, scale }) {
-    this.#pMatrix = mat3.fromScaling(mat3.create(), [width, height]);
     this.#tMatrix = mat3.fromTranslation(mat3.create(), translation || [0, 0]);
     this.#rMatrix = mat3.fromRotation(mat3.create(), rotation || 0);
     this.#sMatrix = mat3.fromScaling(mat3.create(), scale || [1, 1]);
     this.#vMatrix = mat3.create();
-    this.#vpMatrix = mat3.create();
+    this.#pMatrix = mat3.create();
 
-    this.updateViewProjectionMatrix();
+    this.updateProjectionMatrix({ width, height });
+    this.updateViewMatrix();
   }
 
-  updateViewProjectionMatrix() {
-    // P = PT x PS (pre-calculated).
+  updateProjectionMatrix({ width, height }) {
+    this.#pMatrix = mat3.fromScaling(mat3.create(), [width, height]);
+  }
 
-    // V = T x R x S
+  updateViewMatrix() {
     mat3.mul(this.#vMatrix, this.#tMatrix, this.#rMatrix);
     mat3.mul(this.#vMatrix, this.#vMatrix, this.#sMatrix);
     mat3.invert(this.#vMatrix, this.#vMatrix);
-
-    // VP = P x V
-    mat3.mul(this.#vpMatrix, this.#pMatrix, this.#vMatrix);
   }
 
   get translationMatrix() {
@@ -54,10 +50,6 @@ export class Camera {
 
   get projectionMatrix() {
     return this.#pMatrix;
-  }
-
-  get viewProjectionMatrix() {
-    return this.#vpMatrix;
   }
 }
 

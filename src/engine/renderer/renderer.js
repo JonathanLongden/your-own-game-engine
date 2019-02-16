@@ -1,22 +1,35 @@
 import { pipe } from 'ramda';
+import { mat3 } from 'gl-matrix';
 
 import { ProgramObject } from '../object';
 import { spriteShaderProgram } from './sprite_shader_program';
 import { START, UPDATE, STOP } from './renderer_event';
+import { CANVAS_DRAWING_TARGET, TEXTURE_DRAWING_TARGET } from './drawing_target';
 
-const drawTargetByProgram = ({ renderer, target, context, camera, program }) => {
-  renderer.useProgram(program.name);
+const defaultProjectionMatrix = mat3.create();
 
-  // Update current shader program attributes and uniforms.
-  const { attributes, uniforms } = program.onUpdate({ target, context, camera });
-  attributes.forEach(({ name, value }) => renderer.setAttributeValue(name, value));
-  uniforms.forEach(({ name, value }) => renderer.setUniformValue(name, value));
+const drawEntityByProgram = ({
+  renderer,
+  entity,
+  context,
+  camera,
+  program,
+  target = CANVAS_DRAWING_TARGET
+}) => {
+  const { colorMapTexture, children } = entity;
 
-  // Bind current shader program attributes and uniforms.
-  renderer.bindProgramAttributes();
-  renderer.bindProgramUniforms();
+  // Set current drawing target.
+  renderer.target = target;
 
-  const { colorMapTexture, children } = target;
+  // Update drawing viewport.
+  if (target === TEXTURE_DRAWING_TARGET) {
+    // const { width, height } = colorMapTexture;
+    // renderer.viewport = { width, height };
+  } else {
+    // Canvas.
+    const { width, height } = renderer.canvas;
+    renderer.viewport = { width, height };
+  }
 
   if (children) {
     // Target is container.
@@ -30,23 +43,49 @@ const drawTargetByProgram = ({ renderer, target, context, camera, program }) => 
     // tbd: Do we need pre-load and pre-initialize buffer or on first rendering?
 
     // WARNING: THIS CODE IS NOT WORKED.
-    // eslint-disable-next-line no-use-before-define
-    children.forEach(getTargetUpdater({ renderer, context: target, camera }));
-    // WARNING: THIS CODE IS NOT WORKED.
-  } else {
-    // Target is single.
 
-    // Bind target's textures.
-    [colorMapTexture].forEach(t => t && renderer.useTexture(t.name));
+    // We have using TEXTURE_TARGET for each sprite which behaves as container's child.
+    children.forEach(
+      // eslint-disable-next-line no-use-before-define
+      getEntityUpdater({ renderer, context: entity, camera, target: TEXTURE_DRAWING_TARGET })
+    );
+    // WARNING: THIS CODE IS NOT WORKED.
+    return;
   }
 
-  renderer.draw(Math.floor(target.vertices.length / 2));
+  renderer.useProgram(program.name);
+
+  // Bind target's color map texture.
+  if (colorMapTexture) {
+    // tbd: In a case if texture has framebuffer and current target is `TEXTURE_TARGET`, then framebuffer should be swapped!
+    renderer.useTexture(colorMapTexture.name);
+  }
+
+  // Update current shader program attributes and uniforms.
+  const { attributes, uniforms } = program.onUpdate({ entity, context, camera });
+
+  attributes.forEach(({ name, value }) => renderer.setAttributeValue(name, value));
+
+  uniforms.forEach(({ name, value }) => {
+    // As we are writing directly to texture, we need avoid using of projection matrix.
+    if (target === TEXTURE_DRAWING_TARGET && name === 'u_p') {
+      // value = defaultProjectionMatrix;
+    }
+
+    renderer.setUniformValue(name, value);
+  });
+
+  // Bind current shader program attributes and uniforms.
+  renderer.bindProgramAttributes();
+  renderer.bindProgramUniforms();
+
+  renderer.draw(Math.floor(entity.vertices.length / 2));
 };
 
-const getTargetPrograms = ({ programs: p = [] }) => (p.length && p) || [spriteShaderProgram];
+const getEntityPrograms = ({ programs: p = [] }) => (p.length && p) || [spriteShaderProgram];
 
-const getTargetUpdater = props => target => {
-  getTargetPrograms(target).forEach(program => drawTargetByProgram({ ...props, target, program }));
+const getEntityUpdater = props => entity => {
+  getEntityPrograms(entity).forEach(program => drawEntityByProgram({ ...props, entity, program }));
 };
 
 const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
@@ -55,7 +94,7 @@ const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
 
 const prepareRenderer = ({ renderer }) => {
   registerPrebuiltPrograms({ renderer, shaderPrograms: [spriteShaderProgram] });
-
+  renderer.viewport = { width: renderer.canvas.width, height: renderer.canvas.height };
   renderer.setTransparentBlending();
   renderer.loadAllPrograms();
   renderer.loadAllTextures();
@@ -98,7 +137,7 @@ const render = props => {
 
   // Render frame.
   renderer.emit(UPDATE, { dt });
-  scene.children.forEach(getTargetUpdater({ renderer, context: scene, camera }));
+  scene.children.forEach(getEntityUpdater({ renderer, context: scene, camera }));
 
   // Request next frame and reset skip frame accumulator.
   requestNextFrame({ ...props, accumulator: 0 });

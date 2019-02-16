@@ -2,13 +2,15 @@ import { KeyboardController, events } from '../engine/io';
 
 import exampleExecutor1 from './example1';
 import exampleExecutor2 from './example2';
+import exampleExecutor3 from './example3';
 
 let stopExample = () => {};
 
 const codeExecutors = {
   48: () => stopExample,
   49: exampleExecutor1,
-  50: exampleExecutor2
+  50: exampleExecutor2,
+  51: exampleExecutor3
 };
 
 // Initialize keyboard.

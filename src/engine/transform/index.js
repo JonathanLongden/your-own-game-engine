@@ -4,12 +4,13 @@ export const transform = (...transformations) => (...objects) => {
   objects.forEach(obj => {
     transformations.forEach(t => t(obj));
 
-    const { updateModelMatrix, updateViewProjectionMatrix } = obj;
+    if (obj.updateModelMatrix) {
+      obj.updateModelMatrix();
+    }
 
-    // Force update model & projection matrices.
-    [updateModelMatrix, updateViewProjectionMatrix].forEach(updater => {
-      if (updater) updater();
-    });
+    if (obj.updateViewMatrix) {
+      obj.updateViewMatrix();
+    }
   });
 };
 

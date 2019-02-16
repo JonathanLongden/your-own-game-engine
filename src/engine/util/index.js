@@ -1,5 +1,6 @@
 import { uuid } from './uuid';
+import * as coords from './coords';
 
-export { uuid };
+export { uuid, coords };
 
-export default { uuid };
+export default { uuid, coords };

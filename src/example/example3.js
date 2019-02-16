@@ -9,6 +9,7 @@ import { Sprite, SpriteContainer } from '../engine/object';
 import { Scene } from '../engine/scene';
 import { Camera } from '../engine/camera';
 import { transform, translate, rotate } from '../engine/transform';
+import { coords } from '../engine/util';
 
 import imageUrl from './i/atlas.jpg';
 
@@ -54,12 +55,12 @@ export default () => {
     const textures = [
       {
         name: 'my-atlas-texture-01',
-        crop: [0, 0, 0.5, 0.5],
+        coords: Float32Array.from(coords.diagonal2quad([0, 0, 0.5, 0.5])), // x0, y0, x1, y1.
         textureAtlas: textureAtlases[0]
       },
       {
         name: 'my-atlas-texture-02',
-        crop: [0.5, 0.5, 1.0, 1.0],
+        coords: Float32Array.from(coords.diagonal2quad([0.5, 0.5, 1.0, 1.0])), // x0, y0, x1, y1.
         textureAtlas: textureAtlases[0]
       }
     ];

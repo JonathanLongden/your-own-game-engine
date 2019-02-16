@@ -1,18 +1,5 @@
 import { FLOAT_ARRAY_2, MAT_3, INT_1 } from './webgl_types';
 
-const defaultTexelsCoords = [0, 0, 0, 1, 1, 0, 1, 1];
-
-// Transform diagonal coordinates to texels coordinate system (4 vertices).
-const transformDiagonalCoords = diagonalCoords => {
-  const [x, y, x1, y1] = diagonalCoords;
-  return [x, y, x, y1, x1, y, x1, y1];
-};
-
-const getTextureTexels = t => {
-  const coords = (t.crop && transformDiagonalCoords(t.crop)) || defaultTexelsCoords;
-  return Float32Array.from(coords);
-};
-
 export const spriteShaderProgram = {
   name: '_sprite_shader_program',
   vSource: `
@@ -23,12 +10,13 @@ export const spriteShaderProgram = {
         #endif
         attribute vec2 a_pos;
         attribute vec2 a_tex;
-        uniform mat3 u_vp;
+        uniform mat3 u_v;
+        uniform mat3 u_p;
         uniform mat3 u_m;
         varying vec2 v_tex;
         void main() {
             vec2 pos = a_pos * 2.0 - 1.0;
-            gl_Position = vec4((u_vp * u_m * vec3(pos, 1)).xy, 1.0, 1.0);
+            gl_Position = vec4((u_p * u_v * u_m * vec3(pos, 1)).xy, 1.0, 1.0);
             v_tex = a_tex;
         }
     `,
@@ -58,23 +46,28 @@ export const spriteShaderProgram = {
   ],
   uniforms: [
     {
-      name: 'u_vp',
+      name: 'u_p',
+      type: MAT_3
+    },
+    {
+      name: 'u_v',
       type: MAT_3
     },
     { name: 'u_m', type: MAT_3 },
     { name: 'u_cm', type: INT_1 }
   ],
-  onUpdate: ({ target, camera }) => ({
+  onUpdate: ({ entity, camera }) => ({
     attributes: [
-      { name: 'a_pos', value: target.vertices },
+      { name: 'a_pos', value: entity.vertices },
       {
         name: 'a_tex',
-        value: getTextureTexels(target.colorMapTexture)
+        value: entity.colorMapTexture.coords
       }
     ],
     uniforms: [
-      { name: 'u_m', value: target.modelMatrix },
-      { name: 'u_vp', value: camera.viewProjectionMatrix },
+      { name: 'u_m', value: entity.modelMatrix },
+      { name: 'u_v', value: camera.viewMatrix },
+      { name: 'u_p', value: camera.projectionMatrix },
       { name: 'u_cm', value: 0 }
     ]
   })

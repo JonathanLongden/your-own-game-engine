@@ -14,25 +14,42 @@ import {
   MAT_3
 } from './webgl_types';
 import { COLOR_MAP } from './texture_map';
+import { CANVAS_DRAWING_TARGET } from './drawing_target';
 
 export class WebGLRenderer extends EventEmitter {
+  // Rendering context.
   #gl;
 
+  // Shader programs with uniforms, locatins and program handlers.
   #programs;
 
+  // Currently bound shader program.
   #boundProgramName;
 
+  // Currently bound texture.
   #boundTextureName;
 
+  // Currently bound rendering target.
+  #drawingTarget;
+
+  // Is blending enabled, `true` if enabled, otherwise `false`.
   #blending;
 
+  // Texture name-object key-value of registered textures.
   #textures;
 
+  // FPS threshold (1-60 FPS) for rendering.
   #fpsThreshold;
+
+  // Width, height.
+  #viewport;
+
+  #canvas;
 
   constructor({ canvas, fpsThreshold = 60 }) {
     super();
 
+    this.#canvas = canvas;
     this.#gl = canvas.getContext('webgl', {
       preserveDrawingBuffer: false,
       premultipliedAlpha: false,
@@ -42,12 +59,22 @@ export class WebGLRenderer extends EventEmitter {
     this.#blending = false;
     this.#boundProgramName = null;
     this.#boundTextureName = null;
+    this.#drawingTarget = CANVAS_DRAWING_TARGET;
     this.#programs = {};
     this.#textures = {};
     this.#fpsThreshold = fpsThreshold;
+    this.#viewport = { width: 1, height: 1 };
   }
 
   draw(numOfVertices) {
+    // Target can be the whole canvas, framebuffer, or rendering buffer (last of is not implemented yet).
+    // if (targetType === FRAMEBUFFER_TARGET) {
+    // Bind framebuffer, bind texture, write to texture, set aspect for camera projection.
+    // this.draw({ numOfVertices, targetType: CANVAS_TARGET })
+    // }
+
+    // Bind texture, write to texture.
+
     this.#gl.drawArrays(this.#gl.TRIANGLE_STRIP, 0, numOfVertices);
   }
 
@@ -350,6 +377,17 @@ export class WebGLRenderer extends EventEmitter {
     }
   }
 
+  // useFramebufferTexture(textureName) {
+  // if (textureName) {
+  //   if (this.#boundTextureName === textureName) return;
+  //   const { glFramebuffer } = this._getBaseTexture(textureName);
+  //   this.#gl.bindFramebuffer(this.#gl.FRAMEBUFFER, glFramebuffer);
+  //   this.useTexture(textureName);
+  // } else {
+  //   this.#gl.bindFramebuffer(this.#gl.FRAMEBUFFER, null);
+  // }
+  // }
+
   /**
    * Get base texture from registered textures.
    *
@@ -380,6 +418,28 @@ export class WebGLRenderer extends EventEmitter {
 
   get fpsThreshold() {
     return this.#fpsThreshold;
+  }
+
+  set viewport({ width, height }) {
+    this.#viewport = { width, height };
+
+    this.#gl.viewport(0, 0, width, height);
+  }
+
+  get viewport() {
+    return this.#viewport;
+  }
+
+  set drawingTarget(target) {
+    this.#drawingTarget = target;
+  }
+
+  get drawingTarget() {
+    return this.#drawingTarget;
+  }
+
+  get canvas() {
+    return this.#canvas;
   }
 }
 

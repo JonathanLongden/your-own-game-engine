@@ -8,7 +8,10 @@ export class Sprite extends Object2D {
   constructor(props) {
     super({ ...props, vertices: [0, 0, 0, 1, 1, 0, 1, 1] });
 
-    this.#colorMapTexture = props.colorMapTexture;
+    this.#colorMapTexture = {
+      ...props.colorMapTexture,
+      coords: Float32Array.from(props.colorMapTexture.coords || [0, 0, 0, 1, 1, 0, 1, 1])
+    };
   }
 
   get colorMapTexture() {
