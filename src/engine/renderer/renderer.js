@@ -1,12 +1,10 @@
-import { pipe } from 'ramda';
-import { mat3 } from 'gl-matrix';
+import { pipe, always } from 'ramda';
 
-import { ProgramObject } from '../object';
+import { events as sceneEvents } from '../scene';
+import { ProgramObject, types as objectTypes, events as objectEvents } from '../object';
 import { spriteShaderProgram } from './sprite_shader_program';
 import { START, UPDATE, STOP } from './renderer_event';
 import { CANVAS_DRAWING_TARGET, TEXTURE_DRAWING_TARGET } from './drawing_target';
-
-const defaultProjectionMatrix = mat3.create();
 
 const drawEntityByProgram = ({
   renderer,
@@ -23,8 +21,8 @@ const drawEntityByProgram = ({
 
   // Update drawing viewport.
   if (target === TEXTURE_DRAWING_TARGET) {
-    // const { width, height } = colorMapTexture;
-    // renderer.viewport = { width, height };
+    const { width, height } = context.colorMapTexture;
+    renderer.viewport = { width, height };
   } else {
     // Canvas.
     const { width, height } = renderer.canvas;
@@ -92,6 +90,29 @@ const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
   shaderPrograms.forEach(program => renderer.registerProgram(program));
 };
 
+const prepareSprite = ({ renderer, entity }) => {
+  renderer.registerTexture(entity.colorMapTexture);
+};
+
+const prepareSpriteContainer = ({ renderer, entity }) => {
+  // eslint-disable-next-line no-use-before-define
+  const listener = entity => prepareEntity({ renderer, entity });
+  entity.children.addListener(objectEvents.SPRITE_CONTAINER_CHILD_ADD, listener);
+
+  renderer.registerTarget({ type: TEXTURE_DRAWING_TARGET, name: entity.uuid });
+};
+
+const prepareEntity = ({ renderer, entity }) => {
+  (({
+    [objectTypes.SPRITE_CONTAINER_TYPE]: prepareSpriteContainer,
+    [objectTypes.SPRITE]: prepareSprite
+  }(entity.type) || always())({ renderer, entity }));
+};
+
+const prepareScene = ({ renderer, scene }) => {
+  scene.addListener(sceneEvents.SCENE_CHILD_ADD, entity => prepareEntity({ renderer, entity }));
+};
+
 const prepareRenderer = ({ renderer }) => {
   registerPrebuiltPrograms({ renderer, shaderPrograms: [spriteShaderProgram] });
   renderer.viewport = { width: renderer.canvas.width, height: renderer.canvas.height };
@@ -154,6 +175,7 @@ export const start = props => {
 
   props.renderer.emit(START);
 
+  prepareScene(props);
   prepareRenderer(props);
   render({ ...props, isStopRequested });
 
@@ -168,4 +190,5 @@ export const registerTextures = ({ renderer, textures }) => {
   textures.forEach(texture => renderer.registerTexture(texture));
 };
 
-export const withPrograms = programs => target => new ProgramObject(target, programs);
+// tbd Fuctionality is not fully implemented.
+// export const withPrograms = programs => target => new ProgramObject(target, programs);

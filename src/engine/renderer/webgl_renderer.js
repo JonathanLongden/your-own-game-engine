@@ -44,6 +44,8 @@ export class WebGLRenderer extends EventEmitter {
   // Width, height.
   #viewport;
 
+  #targets;
+
   #canvas;
 
   constructor({ canvas, fpsThreshold = 60 }) {
@@ -64,6 +66,9 @@ export class WebGLRenderer extends EventEmitter {
     this.#textures = {};
     this.#fpsThreshold = fpsThreshold;
     this.#viewport = { width: 1, height: 1 };
+    this.#targets = {
+      _default: { type: CANVAS_DRAWING_TARGET }
+    };
   }
 
   draw(numOfVertices) {
@@ -174,6 +179,16 @@ export class WebGLRenderer extends EventEmitter {
     });
 
     this.useProgram(null);
+  }
+
+  registerTarget({ type, name }) {
+    this.#targets[name] = {
+      type
+    };
+  }
+
+  loadTargets() {
+    // tbd load targets (create buffers and etc.)
   }
 
   registerTexture({ name, image, type, textureAtlas }) {
@@ -342,6 +357,10 @@ export class WebGLRenderer extends EventEmitter {
     });
   }
 
+  bindTarget(target) {
+    this.#drawingTarget = target || this.#targets._default;
+  }
+
   useProgram(programName) {
     if (programName) {
       if (this.#boundProgramName === programName) return;
@@ -428,10 +447,6 @@ export class WebGLRenderer extends EventEmitter {
 
   get viewport() {
     return this.#viewport;
-  }
-
-  set drawingTarget(target) {
-    this.#drawingTarget = target;
   }
 
   get drawingTarget() {
