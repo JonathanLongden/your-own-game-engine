@@ -55,12 +55,12 @@ export default () => {
     const textures = [
       {
         name: 'my-atlas-texture-01',
-        coords: Float32Array.from(coords.diagonal2quad([0, 0, 0.5, 0.5])), // x0, y0, x1, y1.
+        coords: [0, 0, 128, 128],
         textureAtlas: textureAtlases[0]
       },
       {
         name: 'my-atlas-texture-02',
-        coords: Float32Array.from(coords.diagonal2quad([0.5, 0.5, 1.0, 1.0])), // x0, y0, x1, y1.
+        coords: [128, 128, 256, 256],
         textureAtlas: textureAtlases[0]
       }
     ];

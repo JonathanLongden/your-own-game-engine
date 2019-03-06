@@ -14,7 +14,7 @@ import {
   MAT_3
 } from './webgl_types';
 import { COLOR_MAP } from './texture_map';
-import { CANVAS_DRAWING_TARGET } from './drawing_target';
+import { CANVAS_DRAWING_TARGET, TEXTURE_DRAWING_TARGET } from './drawing_target';
 
 export class WebGLRenderer extends EventEmitter {
   // Rendering context.
@@ -44,8 +44,10 @@ export class WebGLRenderer extends EventEmitter {
   // Width, height.
   #viewport;
 
+  // Attached rendering targets.
   #targets;
 
+  // Bound canvas.
   #canvas;
 
   constructor({ canvas, fpsThreshold = 60 }) {
@@ -187,8 +189,17 @@ export class WebGLRenderer extends EventEmitter {
     };
   }
 
-  loadTargets() {
-    // tbd load targets (create buffers and etc.)
+  loadAllTargets() {
+    Object.keys(this.#targets).forEach(t => this.loadTarget(t));
+  }
+
+  loadTarget(targetName) {
+    const { type } = this.#targets[targetName];
+
+    if (type === TEXTURE_DRAWING_TARGET) {
+      const framebuffer = this.#gl.createFramebuffer();
+      this.#targets[targetName].glFramebuffer = framebuffer;
+    }
   }
 
   registerTexture({ name, image, type, textureAtlas }) {
@@ -222,29 +233,41 @@ export class WebGLRenderer extends EventEmitter {
 
       this.#textures[name].glTexture = glTexture;
 
-      this.useTexture(name);
+      // We don't need to set up texture without image.
+      // We don't need image in a case of framebuffer definition.
+      if (image) {
+        this.useTexture(name);
 
-      this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
-      this.#gl.texImage2D(
-        this.#gl.TEXTURE_2D,
-        0,
-        this.#gl.RGBA,
-        this.#gl.RGBA,
-        this.#gl.UNSIGNED_BYTE,
-        image
-      );
-      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_S, this.#gl.CLAMP_TO_EDGE);
-      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_WRAP_T, this.#gl.CLAMP_TO_EDGE);
-      this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_MAG_FILTER, this.#gl.LINEAR);
-      this.#gl.texParameteri(
-        this.#gl.TEXTURE_2D,
-        this.#gl.TEXTURE_MIN_FILTER,
-        this.#gl.LINEAR_MIPMAP_NEAREST
-      );
+        this.#gl.pixelStorei(this.#gl.UNPACK_FLIP_Y_WEBGL, 1);
+        this.#gl.texImage2D(
+          this.#gl.TEXTURE_2D,
+          0,
+          this.#gl.RGBA,
+          this.#gl.RGBA,
+          this.#gl.UNSIGNED_BYTE,
+          image
+        );
+        this.#gl.texParameteri(
+          this.#gl.TEXTURE_2D,
+          this.#gl.TEXTURE_WRAP_S,
+          this.#gl.CLAMP_TO_EDGE
+        );
+        this.#gl.texParameteri(
+          this.#gl.TEXTURE_2D,
+          this.#gl.TEXTURE_WRAP_T,
+          this.#gl.CLAMP_TO_EDGE
+        );
+        this.#gl.texParameteri(this.#gl.TEXTURE_2D, this.#gl.TEXTURE_MAG_FILTER, this.#gl.LINEAR);
+        this.#gl.texParameteri(
+          this.#gl.TEXTURE_2D,
+          this.#gl.TEXTURE_MIN_FILTER,
+          this.#gl.LINEAR_MIPMAP_NEAREST
+        );
 
-      this.#gl.generateMipmap(this.#gl.TEXTURE_2D);
+        this.#gl.generateMipmap(this.#gl.TEXTURE_2D);
 
-      this.useTexture(null);
+        this.useTexture(null);
+      }
     }
   }
 
@@ -357,8 +380,17 @@ export class WebGLRenderer extends EventEmitter {
     });
   }
 
-  bindTarget(target) {
-    this.#drawingTarget = target || this.#targets._default;
+  bindTarget(name) {
+    const target = this.#targets[name];
+
+    if (target) {
+      const { glFramebuffer } = target;
+      this.#gl.bindFramebuffer(this.#gl.FRAMEBUFFER, glFramebuffer);
+      this.#drawingTarget = name;
+    } else {
+      this.#gl.bindFramebuffer(this.#gl.FRAMEBUFFER, null);
+      this.#drawingTarget = '_default';
+    }
   }
 
   useProgram(programName) {
@@ -451,6 +483,10 @@ export class WebGLRenderer extends EventEmitter {
 
   get drawingTarget() {
     return this.#drawingTarget;
+  }
+
+  get drawingTargetType() {
+    return this.#targets[this.#drawingTarget].type;
   }
 
   get canvas() {

@@ -37,7 +37,7 @@ export default () => {
     // Initialize WebGL renderer with 15 FPS threshold.
     const renderer = new WebGLRenderer({
       canvas,
-      fpsThreshold: 15 // FPS.
+      fpsThreshold: 60 // FPS.
     });
 
     // Create scene where sprites will be added.

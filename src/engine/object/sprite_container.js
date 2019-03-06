@@ -4,6 +4,7 @@ import {
   SPRITE_CONTAINER_CHILD_ADD,
   SPRITE_CONTAINER_CHILD_REMOVE
 } from './sprite_container_events';
+import { COLOR_MAP } from '../renderer';
 
 export class SpriteContainer extends Object2D {
   #children;
@@ -17,7 +18,9 @@ export class SpriteContainer extends Object2D {
     this.#colorMapTexture = {
       width: 0,
       height: 0,
-      coords: Float32Array.from([0, 0, 0, 1, 1, 0, 1, 1])
+      coords: Float32Array.from([0, 0, 0, 1, 1, 0, 1, 1]),
+      type: COLOR_MAP,
+      name: `${this.uuid}_color_map`
     };
   }
 
@@ -25,7 +28,20 @@ export class SpriteContainer extends Object2D {
     children.forEach(child => {
       this.#children.push(child);
       this.emit(SPRITE_CONTAINER_CHILD_ADD, child);
+
+      const {
+        coords: [x, y, x1, y1] = [],
+        image: { width: imageWidth, height: imageHeight } = {}
+      } = child.colorMapTexture;
+
+      const width = imageWidth || x1 - x;
+      const height = imageHeight || y1 - y;
+
+      this.#colorMapTexture.width += width;
+      this.#colorMapTexture.height += height;
     });
+
+    console.log(this.#colorMapTexture);
   }
 
   remove(child) {

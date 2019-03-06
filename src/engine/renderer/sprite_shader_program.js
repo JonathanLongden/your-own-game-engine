@@ -1,3 +1,17 @@
+import { coords } from '../util';
+
+// on update
+
+// tbd we need to calculate original size in gl quad coords.
+
+// const { image: { width: contextWidth, height: contextHeight } = {} } = context;
+// const {
+//   coords: [x, x1, y, y1],
+//   image: { width: entityWidth, height: entityHeight } = {}
+// } = entity.colorMapTexture;
+// const w = entityWidth || x1 - x;
+// const h = entityHeight || y1 - y;
+
 import { FLOAT_ARRAY_2, MAT_3, INT_1 } from './webgl_types';
 
 export const spriteShaderProgram = {
@@ -56,12 +70,12 @@ export const spriteShaderProgram = {
     { name: 'u_m', type: MAT_3 },
     { name: 'u_cm', type: INT_1 }
   ],
-  onUpdate: ({ entity, camera }) => ({
+  onUpdate: ({ entity, context, camera }) => ({
     attributes: [
       { name: 'a_pos', value: entity.vertices },
       {
         name: 'a_tex',
-        value: entity.colorMapTexture.coords
+        value: coords.px2quad(w)
       }
     ],
     uniforms: [

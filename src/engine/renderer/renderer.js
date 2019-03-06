@@ -1,56 +1,42 @@
 import { pipe, always } from 'ramda';
 
 import { events as sceneEvents } from '../scene';
-import { ProgramObject, types as objectTypes, events as objectEvents } from '../object';
+import { types as objectTypes, events as objectEvents, utils as objectUtils } from '../object';
 import { spriteShaderProgram } from './sprite_shader_program';
 import { START, UPDATE, STOP } from './renderer_event';
-import { CANVAS_DRAWING_TARGET, TEXTURE_DRAWING_TARGET } from './drawing_target';
+import { TEXTURE_DRAWING_TARGET } from './drawing_target';
 
-const drawEntityByProgram = ({
-  renderer,
-  entity,
-  context,
-  camera,
-  program,
-  target = CANVAS_DRAWING_TARGET
-}) => {
+const drawEntityByProgram = ({ renderer, entity, context, camera, program }) => {
   const { colorMapTexture, children } = entity;
 
-  // Set current drawing target.
-  renderer.target = target;
+  // Bind drawing target depends on entity UUID that was registered.
+  // In a case if target was not found for received UUID, then
+  // canvas drawing target will be used instead.
+  renderer.bindTarget(entity.uuid);
 
-  // Update drawing viewport.
-  if (target === TEXTURE_DRAWING_TARGET) {
-    const { width, height } = context.colorMapTexture;
-    renderer.viewport = { width, height };
+  const { drawingTargetType: drawingTarget } = renderer;
+
+  // Render sprite container children.
+  if (objectUtils.isSpriteContainer(entity)) {
+    children.forEach(
+      // eslint-disable-next-line no-use-before-define
+      getEntityUpdater({ renderer, context: entity, camera })
+    );
+
+    renderer.bindTarget();
+  }
+
+  // Setting up renderer viewport depends of drawing target.
+  if (drawingTarget === TEXTURE_DRAWING_TARGET) {
+    // tbd no width and height?
+    // const { width, height } = entity.colorMapTexture;
+    // renderer.viewport = { width, height };
   } else {
-    // Canvas.
     const { width, height } = renderer.canvas;
     renderer.viewport = { width, height };
   }
 
-  if (children) {
-    // Target is container.
-
-    // In a case if target is SpriteContainer, it's needed somehow
-    // to prepare framebuffer and draw into and after drawing we need to bind to actual canvas.
-
-    // tbd: All containers have internal framebuffers?
-    // tbd: Where to define framebuffer?
-    // tbd: How to manage framebuffer?
-    // tbd: Do we need pre-load and pre-initialize buffer or on first rendering?
-
-    // WARNING: THIS CODE IS NOT WORKED.
-
-    // We have using TEXTURE_TARGET for each sprite which behaves as container's child.
-    children.forEach(
-      // eslint-disable-next-line no-use-before-define
-      getEntityUpdater({ renderer, context: entity, camera, target: TEXTURE_DRAWING_TARGET })
-    );
-    // WARNING: THIS CODE IS NOT WORKED.
-    return;
-  }
-
+  // Activate shader program.
   renderer.useProgram(program.name);
 
   // Bind target's color map texture.
@@ -64,9 +50,10 @@ const drawEntityByProgram = ({
 
   attributes.forEach(({ name, value }) => renderer.setAttributeValue(name, value));
 
+  // tbd HACK!
   uniforms.forEach(({ name, value }) => {
     // As we are writing directly to texture, we need avoid using of projection matrix.
-    if (target === TEXTURE_DRAWING_TARGET && name === 'u_p') {
+    if (drawingTarget === TEXTURE_DRAWING_TARGET && name === 'u_p') {
       // value = defaultProjectionMatrix;
     }
 
@@ -97,26 +84,31 @@ const prepareSprite = ({ renderer, entity }) => {
 const prepareSpriteContainer = ({ renderer, entity }) => {
   // eslint-disable-next-line no-use-before-define
   const listener = entity => prepareEntity({ renderer, entity });
-  entity.children.addListener(objectEvents.SPRITE_CONTAINER_CHILD_ADD, listener);
+  entity.addListener(objectEvents.SPRITE_CONTAINER_CHILD_ADD, listener);
 
   renderer.registerTarget({ type: TEXTURE_DRAWING_TARGET, name: entity.uuid });
+  renderer.registerTexture(entity.colorMapTexture);
 };
 
 const prepareEntity = ({ renderer, entity }) => {
   (({
     [objectTypes.SPRITE_CONTAINER_TYPE]: prepareSpriteContainer,
     [objectTypes.SPRITE]: prepareSprite
-  }(entity.type) || always())({ renderer, entity }));
+  }[entity.type] || always())({ renderer, entity }));
 };
 
 const prepareScene = ({ renderer, scene }) => {
-  scene.addListener(sceneEvents.SCENE_CHILD_ADD, entity => prepareEntity({ renderer, entity }));
+  const listener = entity => prepareEntity({ entity, renderer });
+
+  scene.addListener(sceneEvents.SCENE_CHILD_ADD, listener);
+  scene.children.forEach(listener);
 };
 
 const prepareRenderer = ({ renderer }) => {
   registerPrebuiltPrograms({ renderer, shaderPrograms: [spriteShaderProgram] });
   renderer.viewport = { width: renderer.canvas.width, height: renderer.canvas.height };
   renderer.setTransparentBlending();
+  renderer.loadAllTargets();
   renderer.loadAllPrograms();
   renderer.loadAllTextures();
 };
