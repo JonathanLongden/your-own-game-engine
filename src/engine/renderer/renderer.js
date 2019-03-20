@@ -1,73 +1,77 @@
+// tbd @andytyurin renderer.registerTexture is not consistent, need to trigger also on scene child remove.
+
+import { mat3 } from 'gl-matrix';
 import { pipe, always } from 'ramda';
 
 import { events as sceneEvents } from '../scene';
 import { types as objectTypes, events as objectEvents, utils as objectUtils } from '../object';
-import { spriteShaderProgram } from './sprite_shader_program';
 import { START, UPDATE, STOP } from './renderer_event';
-import { TEXTURE_DRAWING_TARGET } from './drawing_target';
+// import { TEXTURE_DRAWING_TARGET } from './drawing_target';
+import { SpriteShaderProgram } from '../shader_program';
+
+const defaultShaderPrograms = [new SpriteShaderProgram()];
 
 const drawEntityByProgram = ({ renderer, entity, context, camera, program }) => {
-  const { colorMapTexture, children } = entity;
-
-  // Bind drawing target depends on entity UUID that was registered.
-  // In a case if target was not found for received UUID, then
-  // canvas drawing target will be used instead.
-  renderer.bindTarget(entity.uuid);
-
-  const { drawingTargetType: drawingTarget } = renderer;
+  const { diffuseMap, children } = entity;
 
   // Render sprite container children.
   if (objectUtils.isSpriteContainer(entity)) {
+    renderer.bindFramebuffer(entity.framebuffer.uuid);
     children.forEach(
       // eslint-disable-next-line no-use-before-define
       getEntityUpdater({ renderer, context: entity, camera })
     );
-
-    renderer.bindTarget();
+    renderer.unbindFramebuffer();
   }
 
-  // Setting up renderer viewport depends of drawing target.
-  if (drawingTarget === TEXTURE_DRAWING_TARGET) {
-    // tbd no width and height?
-    // const { width, height } = entity.colorMapTexture;
-    // renderer.viewport = { width, height };
+  // Get drawing target.
+  // const { drawingTargetType: drawingTarget } = renderer;
+
+  if (objectUtils.isSpriteContainer(context)) {
+    const { width, height } = entity.diffuseMap.baseTexture;
+    renderer.viewport = { width, height };
   } else {
     const { width, height } = renderer.canvas;
     renderer.viewport = { width, height };
   }
 
-  // Activate shader program.
-  renderer.useProgram(program.name);
-
   // Bind target's color map texture.
-  if (colorMapTexture) {
+  if (diffuseMap) {
     // tbd: In a case if texture has framebuffer and current target is `TEXTURE_TARGET`, then framebuffer should be swapped!
-    renderer.useTexture(colorMapTexture.name);
+    renderer.bindTexture(diffuseMap.uuid);
   }
 
   // Update current shader program attributes and uniforms.
-  const { attributes, uniforms } = program.onUpdate({ entity, context, camera });
-
-  attributes.forEach(({ name, value }) => renderer.setAttributeValue(name, value));
-
-  // tbd HACK!
-  uniforms.forEach(({ name, value }) => {
-    // As we are writing directly to texture, we need avoid using of projection matrix.
-    if (drawingTarget === TEXTURE_DRAWING_TARGET && name === 'u_p') {
-      // value = defaultProjectionMatrix;
-    }
-
-    renderer.setUniformValue(name, value);
+  const { attributes, uniforms } = program.onUpdate({
+    entity,
+    context,
+    camera,
+    renderer
   });
 
-  // Bind current shader program attributes and uniforms.
-  renderer.bindProgramAttributes();
-  renderer.bindProgramUniforms();
+  Object.keys(attributes).forEach(name => {
+    renderer.setAttributeValue(program.uuid, name, attributes[name]);
+  });
+
+  // tbd HACK!
+  Object.keys(uniforms).forEach(name => {
+    let uniform = uniforms[name];
+
+    // As we are writing directly to texture, we need avoid using of projection matrix.
+    if (objectUtils.isSpriteContainer(context) && name === 'u_p') {
+      uniform = mat3.create();
+    }
+
+    renderer.setUniformValue(program.uuid, name, uniform);
+  });
+
+  // Activate shader program.
+  renderer.bindProgram(program.uuid);
 
   renderer.draw(Math.floor(entity.vertices.length / 2));
 };
 
-const getEntityPrograms = ({ programs: p = [] }) => (p.length && p) || [spriteShaderProgram];
+const getEntityPrograms = ({ programs: p = [] }) => (p.length && p) || defaultShaderPrograms;
 
 const getEntityUpdater = props => entity => {
   getEntityPrograms(entity).forEach(program => drawEntityByProgram({ ...props, entity, program }));
@@ -78,22 +82,43 @@ const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
 };
 
 const prepareSprite = ({ renderer, entity }) => {
-  renderer.registerTexture(entity.colorMapTexture);
+  renderer.registerTexture(entity.diffuseMap);
 };
 
 const prepareSpriteContainer = ({ renderer, entity }) => {
-  // eslint-disable-next-line no-use-before-define
-  const listener = entity => prepareEntity({ renderer, entity });
-  entity.addListener(objectEvents.SPRITE_CONTAINER_CHILD_ADD, listener);
+  let originalDiffuseMap;
 
-  renderer.registerTarget({ type: TEXTURE_DRAWING_TARGET, name: entity.uuid });
-  renderer.registerTexture(entity.colorMapTexture);
+  // eslint-disable-next-line no-use-before-define
+  const prepareChild = entity => prepareEntity({ renderer, entity });
+
+  // tbd @andytyurin refactor by spliting the stuff.
+  const updateDiffuseMap = () => {
+    if (originalDiffuseMap) {
+      renderer.deregisterTexture(originalDiffuseMap.uuid);
+    }
+
+    renderer.registerTexture(entity.diffuseMap);
+    renderer.registerFramebuffer(entity.framebuffer);
+
+    renderer.loadTexture(entity.diffuseMap.uuid);
+    renderer.loadFramebuffer(entity.framebuffer.uuid, entity.diffuseMap.uuid);
+
+    originalDiffuseMap = entity.diffuseMap;
+  };
+
+  entity.addListener(objectEvents.SPRITE_CONTAINER_CHILD_ADD, prepareChild);
+  entity.addListener(objectEvents.SPRITE_CONTAINER_DIFFUSE_MAP_CHANGE, updateDiffuseMap);
+
+  entity.children.forEach(child => {
+    prepareChild(child);
+    updateDiffuseMap();
+  });
 };
 
 const prepareEntity = ({ renderer, entity }) => {
   (({
     [objectTypes.SPRITE_CONTAINER_TYPE]: prepareSpriteContainer,
-    [objectTypes.SPRITE]: prepareSprite
+    [objectTypes.SPRITE_TYPE]: prepareSprite
   }[entity.type] || always())({ renderer, entity }));
 };
 
@@ -105,10 +130,11 @@ const prepareScene = ({ renderer, scene }) => {
 };
 
 const prepareRenderer = ({ renderer }) => {
-  registerPrebuiltPrograms({ renderer, shaderPrograms: [spriteShaderProgram] });
+  registerPrebuiltPrograms({ renderer, shaderPrograms: defaultShaderPrograms });
   renderer.viewport = { width: renderer.canvas.width, height: renderer.canvas.height };
   renderer.setTransparentBlending();
-  renderer.loadAllTargets();
+
+  // tbd @andytyurin remove in favor of per entity texture-program-fbo loading.
   renderer.loadAllPrograms();
   renderer.loadAllTextures();
 };

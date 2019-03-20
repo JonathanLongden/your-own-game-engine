@@ -2,25 +2,16 @@ import Object2D from './object_2d';
 import { SPRITE_TYPE } from './object_2d_types';
 
 export class Sprite extends Object2D {
-  #colorMapTexture;
-
-  #texels;
+  #diffuseMap;
 
   constructor(props) {
-    super({ ...props, vertices: [0, 0, 0, 1, 1, 0, 1, 1], type: props.type || SPRITE_TYPE });
+    super({ ...props, vertices: [0, 0, 0, 1, 1, 0, 1, 1], type: SPRITE_TYPE });
 
-    this.#colorMapTexture = {
-      ...props.colorMapTexture,
-      coords: Float32Array.from(props.colorMapTexture.coords || [0, 0, 0, 1, 1, 0, 1, 1])
-    };
+    this.#diffuseMap = props.diffuseMap;
   }
 
-  get colorMapTexture() {
-    return this.#colorMapTexture;
-  }
-
-  get texels() {
-    return this.#texels;
+  get diffuseMap() {
+    return this.#diffuseMap;
   }
 }
 

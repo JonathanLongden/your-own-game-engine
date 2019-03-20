@@ -4,7 +4,8 @@ import * as object from './object';
 import * as renderer from './renderer';
 import * as scene from './scene';
 import * as util from './util';
+import * as texture from './texture';
 
-export { camera, io, object, renderer, scene, util };
+export { camera, io, object, renderer, scene, util, texture };
 
-export default { camera, io, object, renderer, scene, util };
+export default { camera, io, object, renderer, scene, util, texture };

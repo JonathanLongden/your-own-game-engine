@@ -1,15 +1,9 @@
-import {
-  WebGLRenderer,
-  registerTextures,
-  COLOR_MAP,
-  start,
-  events as rendererEvent
-} from '../engine/renderer';
+import { WebGLRenderer, start, events as rendererEvent } from '../engine/renderer';
 import { Sprite } from '../engine/object';
 import { Scene } from '../engine/scene';
 import { Camera } from '../engine/camera';
+import { BaseTexture, Texture } from '../engine/texture';
 import { transform, translate, rotate } from '../engine/transform';
-import { coords } from '../engine/util';
 
 import imageUrl from './i/atlas.jpg';
 
@@ -44,33 +38,13 @@ export default () => {
     const height = (minSize / innerHeight) * sizeFactor;
     const camera = new Camera({ width, height });
 
-    const textureAtlases = [
-      {
-        name: 'my-atlas',
-        type: COLOR_MAP,
-        image
-      }
-    ];
-
-    const textures = [
-      {
-        name: 'my-atlas-texture-01',
-        coords: [0, 0, 128, 128],
-        textureAtlas: textureAtlases[0]
-      },
-      {
-        name: 'my-atlas-texture-02',
-        coords: [128, 128, 256, 256],
-        textureAtlas: textureAtlases[0]
-      }
-    ];
-
-    // Register textures for furher usage by renderer.
-    registerTextures({ renderer, textures });
+    const baseTexture = new BaseTexture({ image });
+    const subTexture01 = new Texture({ baseTexture, textureCoords: [0, 0, 512, 512] });
+    const subTexture02 = new Texture({ baseTexture, textureCoords: [512, 512, 1024, 1024] });
 
     // Create sprites with attached textures.
-    const sprite01 = new Sprite({ colorMapTexture: textures[0] });
-    const sprite02 = new Sprite({ colorMapTexture: textures[1] });
+    const sprite01 = new Sprite({ diffuseMap: subTexture01 });
+    const sprite02 = new Sprite({ diffuseMap: subTexture02 });
 
     // Add sprites to scene.
     scene.add(sprite01, sprite02);

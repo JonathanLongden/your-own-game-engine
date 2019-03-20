@@ -7,8 +7,7 @@ import {
   WebGLRenderer,
   events as rendererEvent,
   start,
-  registerTextures,
-  COLOR_MAP
+  registerTextures
 } from '../engine/renderer';
 
 import testImgUrl from './i/test.png';
@@ -50,31 +49,31 @@ export default () => {
     const height = (minSize / innerHeight) * sizeFactor;
     const camera = new Camera({ width, height });
 
-    // Textures to use.
-    const textures = [
-      {
-        name: 'my-texture',
-        type: COLOR_MAP,
-        image
-      }
-    ];
+    // // Textures to use.
+    // const textures = [
+    //   {
+    //     name: 'my-texture',
+    //     type: COLOR_MAP,
+    //     image
+    //   }
+    // ];
 
-    // Register textures for furher usage by renderer.
-    registerTextures({ renderer, textures });
+    // // Register textures for furher usage by renderer.
+    // registerTextures({ renderer, textures });
 
-    // Add sprites to scene with random positions by X, Y.
-    for (let i = 0; i < 770; i += 1) {
-      const sprite = new Sprite({ colorMapTexture: textures[0] });
+    // // Add sprites to scene with random positions by X, Y.
+    // for (let i = 0; i < 770; i += 1) {
+    //   const sprite = new Sprite({ colorMapTexture: textures[0] });
 
-      transform(
-        translateTo([
-          (Math.random() > 0.5 ? 1 : -1) * Math.random() * 25,
-          (Math.random() > 0.5 ? 1 : -1) * Math.random() * 25
-        ])
-      )(sprite);
+    //   transform(
+    //     translateTo([
+    //       (Math.random() > 0.5 ? 1 : -1) * Math.random() * 25,
+    //       (Math.random() > 0.5 ? 1 : -1) * Math.random() * 25
+    //     ])
+    //   )(sprite);
 
-      scene.add(sprite);
-    }
+    //   scene.add(sprite);
+    // }
 
     // Notify about rendering stuff and initialize IO.
     renderer.addListener(rendererEvent.START, () => {
