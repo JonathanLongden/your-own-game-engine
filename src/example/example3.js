@@ -1,9 +1,9 @@
-import { WebGLRenderer, COLOR_MAP, start, events as rendererEvent } from '../engine/renderer';
+import { WebGLRenderer, start, events as rendererEvent } from '../engine/renderer';
 import { Sprite, SpriteContainer } from '../engine/object';
 import { Scene } from '../engine/scene';
 import { Camera } from '../engine/camera';
 import { transform, translate, rotate } from '../engine/transform';
-import { BaseTexture, Texture } from '../engine/texture';
+import { BaseTexture, Texture, FramebufferTexture } from '../engine/texture';
 
 import imageUrl from './i/atlas.jpg';
 
@@ -32,31 +32,28 @@ export default () => {
     const scene = new Scene();
 
     // Camera initialization.
-    const minSize = Math.min(innerWidth, innerHeight);
-    const sizeFactor = 0.25;
-    const width = (minSize / innerWidth) * sizeFactor;
-    const height = (minSize / innerHeight) * sizeFactor;
-    const camera = new Camera({ width, height });
+    const camera = new Camera({ width: innerWidth, height: innerHeight });
 
     const baseTexture = new BaseTexture({ image });
-    const texture01 = new Texture({ baseTexture, textureCoords: [0, 0, 128, 128] });
-    const texture02 = new Texture({ baseTexture, textureCoords: [128, 128, 256, 256] });
-
-    const tiles = new SpriteContainer();
+    const texture01 = new Texture({ baseTexture, textureCoords: [0, 0, 512, 512] });
+    const texture02 = new Texture({ baseTexture, textureCoords: [512, 512, 1024, 1024] });
+    // tbd @andytyurin why reverse? o.O
+    const framebufferTexture = new FramebufferTexture({ width: 512, height: 1024 });
+    const tiles = new SpriteContainer({ diffuseMap: framebufferTexture });
 
     // Create sprites with attached textures.
     const sprite01 = new Sprite({ diffuseMap: texture01 });
     const sprite02 = new Sprite({ diffuseMap: texture02 });
+
+    // Translate sprites.
+    transform(translate([-1, 0])(sprite01));
+    transform(translate([1, 0]))(sprite02);
 
     // Add sprites to sprite container.
     tiles.add(sprite01, sprite02);
 
     // Add sprite container to scene.
     scene.add(tiles);
-
-    // Translate sprites.
-    transform(translate([-1, 0])(sprite01));
-    transform(translate([1, 0]))(sprite02);
 
     // Notify about rendering stuff and initialize IO.
     renderer.addListener(rendererEvent.START, () => {

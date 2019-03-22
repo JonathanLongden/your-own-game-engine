@@ -21,23 +21,24 @@ const drawEntityByProgram = ({ renderer, entity, context, camera, program }) => 
       // eslint-disable-next-line no-use-before-define
       getEntityUpdater({ renderer, context: entity, camera })
     );
-    renderer.unbindFramebuffer();
   }
 
   // Get drawing target.
   // const { drawingTargetType: drawingTarget } = renderer;
 
   if (objectUtils.isSpriteContainer(context)) {
-    const { width, height } = entity.diffuseMap.baseTexture;
+    const { width, height } = context.diffuseMap.baseTexture;
+    camera.updateProjectionMatrix({ width, height });
     renderer.viewport = { width, height };
   } else {
+    renderer.unbindFramebuffer();
     const { width, height } = renderer.canvas;
     renderer.viewport = { width, height };
+    camera.updateProjectionMatrix({ width, height });
   }
 
   // Bind target's color map texture.
   if (diffuseMap) {
-    // tbd: In a case if texture has framebuffer and current target is `TEXTURE_TARGET`, then framebuffer should be swapped!
     renderer.bindTexture(diffuseMap.uuid);
   }
 
@@ -53,16 +54,8 @@ const drawEntityByProgram = ({ renderer, entity, context, camera, program }) => 
     renderer.setAttributeValue(program.uuid, name, attributes[name]);
   });
 
-  // tbd HACK!
   Object.keys(uniforms).forEach(name => {
-    let uniform = uniforms[name];
-
-    // As we are writing directly to texture, we need avoid using of projection matrix.
-    if (objectUtils.isSpriteContainer(context) && name === 'u_p') {
-      uniform = mat3.create();
-    }
-
-    renderer.setUniformValue(program.uuid, name, uniform);
+    renderer.setUniformValue(program.uuid, name, uniforms[name]);
   });
 
   // Activate shader program.
@@ -83,6 +76,7 @@ const registerPrebuiltPrograms = ({ renderer, shaderPrograms }) => {
 
 const prepareSprite = ({ renderer, entity }) => {
   renderer.registerTexture(entity.diffuseMap);
+  renderer.loadTexture(entity.diffuseMap.uuid);
 };
 
 const prepareSpriteContainer = ({ renderer, entity }) => {

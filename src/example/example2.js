@@ -8,8 +8,6 @@ import { transform, translate, rotate } from '../engine/transform';
 import imageUrl from './i/atlas.jpg';
 
 export default () => {
-  const { innerWidth, innerHeight } = window;
-
   // Stop rendering function (will be assigned after start).
   let stopRenderer;
 
@@ -20,8 +18,9 @@ export default () => {
     // Add canvas and set size to full screen.
     const canvas = document.createElement('canvas');
     window.document.body.appendChild(canvas);
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     // Initialize WebGL renderer with 15 FPS threshold.
     const renderer = new WebGLRenderer({
@@ -32,11 +31,7 @@ export default () => {
     const scene = new Scene();
 
     // Camera initialization.
-    const minSize = Math.min(innerWidth, innerHeight);
-    const sizeFactor = 0.25;
-    const width = (minSize / innerWidth) * sizeFactor;
-    const height = (minSize / innerHeight) * sizeFactor;
-    const camera = new Camera({ width, height });
+    const camera = new Camera({ width: canvas.clientWidth, height: canvas.clientHeight });
 
     const baseTexture = new BaseTexture({ image });
     const subTexture01 = new Texture({ baseTexture, textureCoords: [0, 0, 512, 512] });

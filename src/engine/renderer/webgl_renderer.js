@@ -302,7 +302,7 @@ export class WebGLRenderer extends EventEmitter {
   }
 
   _isTextureLoaded(uuid) {
-    return !!(this._hasTexture(uuid) && this._getTexture(uuid).glTexture);
+    return !!(this._hasTexture(uuid) && this._getTexture(uuid).baseTexture.glTexture);
   }
 
   _isTextureBound(uuid) {
@@ -331,7 +331,6 @@ export class WebGLRenderer extends EventEmitter {
 
     this.bindTexture(texture.uuid);
 
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -340,7 +339,7 @@ export class WebGLRenderer extends EventEmitter {
     this.unbindTexture();
   }
 
-  _loadBaseTexture(texture) {
+  _loadTexture(texture) {
     const {
       uuid,
       baseTexture: { image }
@@ -379,7 +378,7 @@ export class WebGLRenderer extends EventEmitter {
     }
 
     if (textureUtils.isTexture(texture)) {
-      this._loadBaseTexture(texture);
+      this._loadTexture(texture);
     }
   }
 
