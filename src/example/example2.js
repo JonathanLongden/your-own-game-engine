@@ -3,7 +3,7 @@ import { Sprite } from '../engine/object';
 import { Scene } from '../engine/scene';
 import { Camera } from '../engine/camera';
 import { BaseTexture, Texture } from '../engine/texture';
-import { transform, translate, rotate } from '../engine/transform';
+import { transform, translate, rotate, rotateTo } from '../engine/transform';
 
 import imageUrl from './i/atlas.jpg';
 
@@ -31,15 +31,15 @@ export default () => {
     const scene = new Scene();
 
     // Camera initialization.
-    const camera = new Camera({ width: canvas.clientWidth, height: canvas.clientHeight });
+    const camera = new Camera({ width: canvas.innerWidth, height: canvas.innerHeight });
 
     const baseTexture = new BaseTexture({ image });
-    const subTexture01 = new Texture({ baseTexture, textureCoords: [0, 0, 512, 512] });
-    const subTexture02 = new Texture({ baseTexture, textureCoords: [512, 512, 1024, 1024] });
+    const subTexture01 = new Texture({ baseTexture, pixelCoords: [0, 0, 512, 512] });
+    const subTexture02 = new Texture({ baseTexture, pixelCoords: [512, 512, 1024, 1024] });
 
     // Create sprites with attached textures.
-    const sprite01 = new Sprite({ diffuseMap: subTexture01 });
-    const sprite02 = new Sprite({ diffuseMap: subTexture02 });
+    const sprite01 = new Sprite({ diffuseMap: subTexture01, width: 256, height: 256 });
+    const sprite02 = new Sprite({ diffuseMap: subTexture02, width: 256, height: 256 });
 
     // Add sprites to scene.
     scene.add(sprite01, sprite02);
@@ -52,10 +52,11 @@ export default () => {
       // Translate sprites.
       transform(translate([-1, 0]))(sprite01);
       transform(translate([1, 0]))(sprite02);
+      transform(rotateTo(Math.PI / 2))(sprite02);
     });
 
     renderer.addListener(rendererEvent.UPDATE, () => {
-      transform(rotate(0.01))(sprite01, sprite02);
+      // transform(rotate(0.01))(sprite01, sprite02);
     });
 
     // Notify about stop rendering.

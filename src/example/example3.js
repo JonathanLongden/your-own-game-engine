@@ -35,34 +35,55 @@ export default () => {
     const camera = new Camera({ width: innerWidth, height: innerHeight });
 
     const baseTexture = new BaseTexture({ image });
-    const texture01 = new Texture({ baseTexture, textureCoords: [0, 0, 512, 512] });
-    const texture02 = new Texture({ baseTexture, textureCoords: [512, 512, 1024, 1024] });
-    // tbd @andytyurin why reverse? o.O
-    const framebufferTexture = new FramebufferTexture({ width: 512, height: 1024 });
-    const tiles = new SpriteContainer({ diffuseMap: framebufferTexture });
+    // tbd Rename pixel coords?
+    const texture01 = new Texture({ baseTexture, pixelCoords: [0, 0, 512, 512] });
+    const texture02 = new Texture({ baseTexture, pixelCoords: [512, 512, 1024, 1024] });
+
+    // tbd Rename width & height? How to distinguish px from %?
+    const framebufferTexture = new FramebufferTexture({ width: 1024, height: 512 });
+
+    // tbd We don't have an access to PX, instead better to use % measurement?
+    // tbd Create coordinates object which has ref to renderer and could calculate px, % and wherever.
+    const tiles01 = new SpriteContainer({
+      diffuseMap: framebufferTexture,
+      width: 1024,
+      height: 512
+    });
+    const tiles02 = new SpriteContainer({
+      diffuseMap: framebufferTexture,
+      width: 1024,
+      height: 512
+    });
 
     // Create sprites with attached textures.
-    const sprite01 = new Sprite({ diffuseMap: texture01 });
-    const sprite02 = new Sprite({ diffuseMap: texture02 });
+    const sprite01 = new Sprite({ diffuseMap: texture01, width: 512, height: 512 });
+    const sprite02 = new Sprite({ diffuseMap: texture02, width: 512, height: 512 });
+
+    const sprite03 = new Sprite({ diffuseMap: texture01, width: 512, height: 512 });
+    const sprite04 = new Sprite({ diffuseMap: texture02, width: 512, height: 512 });
 
     // Translate sprites.
-    transform(translate([-1, 0])(sprite01));
-    transform(translate([1, 0]))(sprite02);
+    transform(translate([-1, 0]))(sprite01, sprite03);
+    transform(translate([1, 0]))(sprite02, sprite04);
 
     // Add sprites to sprite container.
-    tiles.add(sprite01, sprite02);
+    tiles01.add(sprite01, sprite02);
+    tiles02.add(sprite03, sprite04);
+
+    // tiles.add(sprite01);
 
     // Add sprite container to scene.
-    scene.add(tiles);
+    scene.add(tiles01, tiles02);
 
     // Notify about rendering stuff and initialize IO.
     renderer.addListener(rendererEvent.START, () => {
       // eslint-disable-next-line no-console
       console.log('Rendering started');
+      transform(rotate(Math.PI / 2))(tiles02);
     });
 
     renderer.addListener(rendererEvent.UPDATE, () => {
-      transform(rotate(0.01))(tiles);
+      transform(rotate(0.01))(tiles01);
     });
 
     // Notify about stop rendering.

@@ -7,14 +7,21 @@ export class Texture extends AbstractTexture {
 
   #textureCoords;
 
-  constructor({ baseTexture, textureCoords = [0, 0, 1, 1] }) {
+  #width;
+
+  #height;
+
+  constructor({ baseTexture, pixelCoords = [0, 0, 1, 1] }) {
     super({ type: TEXTURE_TYPE });
     this.#baseTexture = baseTexture;
 
     const { image: { width = 1, height = 1 } = {} } = this.#baseTexture;
-    const unitCoords = coords.px2unit(width, height, textureCoords);
+    const textureCoords = coords.px2unit(width, height, pixelCoords);
 
-    this.#textureCoords = Float32Array.from(unitCoords);
+    this.#textureCoords = Float32Array.from(textureCoords);
+
+    this.#width = pixelCoords[2] - pixelCoords[0];
+    this.#height = pixelCoords[3] - pixelCoords[1];
   }
 
   get baseTexture() {
@@ -23,6 +30,14 @@ export class Texture extends AbstractTexture {
 
   get textureCoords() {
     return this.#textureCoords;
+  }
+
+  get width() {
+    return this.#width;
+  }
+
+  get height() {
+    return this.#height;
   }
 }
 

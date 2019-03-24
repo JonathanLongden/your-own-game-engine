@@ -1,4 +1,4 @@
-import { mat3 } from 'gl-matrix';
+import { mat3, vec2 } from 'gl-matrix';
 
 export class Camera {
   #pMatrix;
@@ -11,19 +11,24 @@ export class Camera {
 
   #vMatrix;
 
-  #zoom;
-
-  constructor({ width, height, zoom, rotation, translation, scale }) {
+  constructor({ width, height, rotation, translation, scale }) {
     this.#tMatrix = mat3.fromTranslation(mat3.create(), translation || [0, 0]);
     this.#rMatrix = mat3.fromRotation(mat3.create(), rotation || 0);
     this.#sMatrix = mat3.fromScaling(mat3.create(), scale || [1, 1]);
     this.#vMatrix = mat3.create();
     this.#pMatrix = mat3.create();
-    this.#zoom = zoom;
 
     this.updateProjectionMatrix({ width, height });
     this.updateViewMatrix();
   }
+
+  // updateProjectionMatrix({ width, height }) {
+  //   const aspect = Math.min(width / height, height / width);
+  //   const w = width > height ? width * aspect : width;
+  //   const h = width < height ? height * aspect : height;
+
+  //   this.#pMatrix = mat3.fromScaling(mat3.create(), vec2.normalize(vec2.create(), [w, h]));
+  // }
 
   updateProjectionMatrix({ width, height }) {
     const aspectWidth = 1 / Math.max(width / height, 1);
@@ -67,14 +72,6 @@ export class Camera {
 
   get projectionMatrix() {
     return this.#pMatrix;
-  }
-
-  get zoom() {
-    return this.#zoom;
-  }
-
-  set zoom(zoom) {
-    this.#zoom = zoom;
   }
 }
 

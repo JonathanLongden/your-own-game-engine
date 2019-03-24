@@ -21,6 +21,14 @@ export class FramebufferTexture extends AbstractTexture {
   get textureCoords() {
     return this.#textureCoords;
   }
+
+  get width() {
+    return this.#baseTexture.width;
+  }
+
+  get height() {
+    return this.#baseTexture.height;
+  }
 }
 
 export default FramebufferTexture;

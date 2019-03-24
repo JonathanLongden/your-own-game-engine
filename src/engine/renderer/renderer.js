@@ -1,6 +1,4 @@
 // tbd @andytyurin renderer.registerTexture is not consistent, need to trigger also on scene child remove.
-
-import { mat3 } from 'gl-matrix';
 import { pipe, always } from 'ramda';
 
 import { events as sceneEvents } from '../scene';
@@ -21,20 +19,25 @@ const drawEntityByProgram = ({ renderer, entity, context, camera, program }) => 
       // eslint-disable-next-line no-use-before-define
       getEntityUpdater({ renderer, context: entity, camera })
     );
+    renderer.unbindFramebuffer();
   }
 
-  // Get drawing target.
-  // const { drawingTargetType: drawingTarget } = renderer;
-
   if (objectUtils.isSpriteContainer(context)) {
-    const { width, height } = context.diffuseMap.baseTexture;
-    camera.updateProjectionMatrix({ width, height });
-    renderer.viewport = { width, height };
+    camera.updateProjectionMatrix({
+      width: context.diffuseMap.width,
+      height: context.diffuseMap.height
+    });
+    renderer.viewport = {
+      width: context.diffuseMap.width,
+      height: context.diffuseMap.height
+    };
   } else {
-    renderer.unbindFramebuffer();
     const { width, height } = renderer.canvas;
     renderer.viewport = { width, height };
-    camera.updateProjectionMatrix({ width, height });
+    camera.updateProjectionMatrix({
+      width,
+      height
+    });
   }
 
   // Bind target's color map texture.
